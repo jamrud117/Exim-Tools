@@ -237,7 +237,8 @@ function renderPreview(dataArr) {
         <td>${d.jenistrx}</td>
         <td>${d.aju}</td>
         <td>${d.pengirim}</td>
-        <td>${d.bc || "-"}</td>
+        <td>${d.bc || ""}</td>
+        <td>${d.segel || ""}</td>
         <td>${Object.entries(d.kemasan)
           .map(([u, q]) => `${fmtNum(q)} ${u}`)
           .join("<br>")}</td>

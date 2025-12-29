@@ -69,13 +69,8 @@ body::-webkit-scrollbar {
 
 .table-wrapper table {
   table-layout: auto;
-  width: auto;
-  white-space: nowrap;
-}
-
-.table-wrapper.empty table {
-  table-layout: fixed; /* agar header full width saat kosong */
   width: 100%;
+  white-space: nowrap;
 }
 
 table td:nth-child(4),
@@ -87,6 +82,8 @@ table th:nth-child(4) {
 table td,
 table th {
   white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
 }
 
 /* Responsive */

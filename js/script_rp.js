@@ -368,6 +368,7 @@ function generateResultText(dataArr) {
   // FORMAT KHUSUS BC 2.7 MASUK
   // ================================
   const labelTanggal = "Tanggal Masuk";
+  const totalDocs = dataArr.length;
 
   return [
     `*BC 2.7 ${jenisBC}*`,
@@ -376,6 +377,7 @@ function generateResultText(dataArr) {
       ([j, l]) => `No BC 2.7 ( ${j} ) : ${l.join(", ")}`
     ),
     `No Segel : ${segelList.join(", ")}`,
+    `Jumlah Dokumen : ${totalDocs} Dokumen`,
     `Jenis Barang : ${jenisBarang}`,
     `Jumlah barang : ${formatKeyValue(barangMap)}`,
     `Jumlah kemasan : ${formatKeyValue(kemasanMap)}`,

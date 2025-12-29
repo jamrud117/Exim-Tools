@@ -9,6 +9,7 @@ body {
 }
 
 body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: #eef4ff;
   display: flex;
   flex-direction: column;

@@ -293,3 +293,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #newJenisBarang::placeholder {
   color: var(--muted);
 }
+#newJenisBarang {
+  cursor: text;
+}

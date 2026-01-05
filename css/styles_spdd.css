@@ -30,21 +30,27 @@
 }
 html,
 body {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
+}
+html {
+  overflow-y: scroll;
 }
 
 body {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: #f4f6f9;
   color: #333;
 }
-body::-webkit-scrollbar {
-  display: none;
+body.swal2-shown {
+  padding-right: 0 !important;
 }
-
+.main-content {
+  flex: 1;
+}
 /* Warna khusus */
 .text-navy {
   color: #1b2a49;
@@ -131,7 +137,7 @@ body::-webkit-scrollbar {
   color: #ccc;
   text-align: center;
   padding: 14px 0;
-  margin-top: auto; /* Dorong footer ke paling bawah */
+  margin-top: auto;
   font-size: 14px;
   letter-spacing: 0.3px;
 }

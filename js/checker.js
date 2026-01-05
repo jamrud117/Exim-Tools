@@ -1,3 +1,100 @@
+let parsedExBCGlobal = [];
+
+document.addEventListener("DOMContentLoaded", () => {
+  const jenisTrxSelect = document.getElementById("jenisTrx");
+  const exBCWrapper = document.getElementById("exBCWrapper");
+
+  function toggleExBC() {
+    const value = jenisTrxSelect.value;
+    if (value === "RETUR" || value === "LAINNYA") {
+      exBCWrapper.style.display = "block";
+    } else {
+      exBCWrapper.style.display = "none";
+      document.getElementById("exBC").value = "";
+    }
+  }
+
+  jenisTrxSelect.addEventListener("change", toggleExBC);
+  toggleExBC();
+});
+
+function parseExBC(text) {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const result = [];
+
+  for (const line of lines) {
+    const match = line.match(/^(\d+)\s*=\s*([0-9,\s]+)\s*\(([^)]+)\)$/);
+
+    if (!match) continue;
+
+    const jenisDokumen = match[1];
+    const nomorList = match[2].split(",").map((n) => n.trim());
+    const tanggalList = match[3].split(",").map((t) => t.trim());
+
+    const items = nomorList.map((nomor, idx) => ({
+      nomor,
+      tanggal: tanggalList[idx] || "",
+    }));
+
+    result.push({ jenisDokumen, items });
+  }
+
+  return result;
+}
+
+function addExBCHeader(jenisDokumen) {
+  const tbody = document.querySelector("#resultTable tbody");
+  const tr = document.createElement("tr");
+
+  tr.classList.add("fw-bold", "barang-header", "table-info");
+  tr.innerHTML = `<td colspan="4">Ex BC ${jenisDokumen}</td>`;
+
+  tbody.appendChild(tr);
+}
+
+document.getElementById("btnCheck").addEventListener("click", () => {
+  const jenisTrx = document.getElementById("jenisTrx").value;
+  parsedExBCGlobal = [];
+
+  if (jenisTrx === "RETUR" || jenisTrx === "LAINNYA") {
+    const exBCText = document.getElementById("exBC").value;
+
+    if (!exBCText.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Ex BC wajib diisi",
+        text: "Jenis transaksi RETUR / LAINNYA wajib mengisi Ex BC",
+      });
+      return;
+    }
+
+    parsedExBCGlobal = parseExBC(exBCText);
+
+    if (parsedExBCGlobal.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Format Ex BC salah",
+        text: "Gunakan format: 27 = 012345 (2025-10-03)",
+      });
+      return;
+    }
+  }
+  if (typeof checkAll === "function") {
+    checkAll(
+      window.sheetPL,
+      window.sheetINV,
+      window.sheetsDATA,
+      window.kurs,
+      window.kontrakNo,
+      window.kontrakTgl
+    );
+  }
+});
+
 function addResult(
   check,
   value,
@@ -175,6 +272,46 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       jenisTransaksi = "TIDAK DIKETAHUI";
   }
 
+  if (
+    (jenisTransaksi === "RETUR" || jenisTransaksi === "LAINNYA") &&
+    parsedExBCGlobal.length > 0
+  ) {
+    parsedExBCGlobal.forEach((doc) => {
+      // ===== HEADER =====
+      addExBCHeader(doc.jenisDokumen);
+
+      // ===== DATA INV & PL (TEXTAREA) =====
+      const invNomorArr = doc.items.map((i) => i.nomor);
+      const invTanggalArr = doc.items.map((i) => i.tanggal);
+
+      // ===== DATA DRAFT EXIM =====
+      const draft = getExBCFromDraft(sheetsDATA.DOKUMEN, doc.jenisDokumen);
+
+      // ===== MATCHING =====
+      const nopenMatch = draft.nomorArr.join(",") === invNomorArr.join(",");
+
+      const tanggalMatch =
+        draft.tanggalArr.join(",") === invTanggalArr.join(",");
+
+      // ===== OUTPUT =====
+      addResult(
+        "Nomor Daftar",
+        draft.nomorText,
+        invNomorArr.join(", "),
+        nopenMatch,
+        false,
+        "",
+        ""
+      );
+
+      addResult(
+        "Tanggal Daftar",
+        draft.tanggalText,
+        invTanggalArr.join(", "),
+        tanggalMatch
+      );
+    });
+  }
   const isMatchTrx = jenisTransaksi.toUpperCase() === selectedTrx.toUpperCase();
   addResult("Jenis Transaksi", jenisTransaksi, selectedTrx, isMatchTrx);
 
@@ -433,6 +570,30 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     return "";
   }
 
+  function getExBCFromDraft(sheet, kodeDokumen) {
+    const range = XLSX.utils.decode_range(sheet["!ref"]);
+    const nomorArr = [];
+    const tanggalArr = [];
+
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      const kode = getCellValueRC(sheet, r, 2); // kolom KODE DOKUMEN
+      if (String(kode).trim() === String(kodeDokumen)) {
+        const nomor = getCellValueRC(sheet, r, 3); // NOMOR
+        const tanggal = parseExcelDate(getCellValueRC(sheet, r, 4)); // TANGGAL
+
+        if (nomor) nomorArr.push(String(nomor).trim());
+        if (tanggal) tanggalArr.push(tanggal);
+      }
+    }
+
+    return {
+      nomorArr,
+      tanggalArr,
+      nomorText: nomorArr.join(", "),
+      tanggalText: tanggalArr.join(", "),
+    };
+  }
+
   // Ambil tanggal dari sheet DOKUMEN (Draft EXIM)
   function findDocDateByCode(sheet, code) {
     const range = XLSX.utils.decode_range(sheet["!ref"]);
@@ -560,18 +721,6 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
         c: invCols.suratjalan,
       })
     );
-  }
-
-  // ---------- DELIVERY ORDER DATE ----------
-  function findDocDateByCode(sheet, code) {
-    const range = XLSX.utils.decode_range(sheet["!ref"]);
-    for (let r = range.s.r; r <= range.e.r; r++) {
-      const kode = getCellValueRC(sheet, r, 2);
-      if (String(kode).trim() === String(code)) {
-        return parseExcelDate(getCellValueRC(sheet, r, 4));
-      }
-    }
-    return "";
   }
 
   const draftDeliveryOrderDate = findDocDateByCode(sheetsDATA.DOKUMEN, "640");

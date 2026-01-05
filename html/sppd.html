@@ -26,62 +26,27 @@
       </div>
     </nav>
 
-    <div class="container py-4">
-      <h1 class="text-center mb-4 fw-bold text-navy">
-        Sistem Pengecekan Draft Dokumen BC 2.7
-      </h1>
+    <main class="main-content">
+      <div class="container py-4">
+        <h1 class="text-center mb-4 fw-bold text-navy">
+          Sistem Pengecekan Draft Dokumen BC 2.7
+        </h1>
 
-      <div class="card p-4 mb-5 shadow-lg">
-        <!-- Upload -->
-        <div class="mb-3">
-          <label class="form-label fw-semibold"
-            >Upload 3 File Excel (Draft, INV, PL)</label
-          >
-          <input type="file" id="files" class="form-control" multiple />
-        </div>
+        <div class="card p-4 mb-5 shadow-lg">
+          <!-- Upload -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold"
+              >Upload 3 File Excel (Draft, INV, PL)</label
+            >
+            <input type="file" id="files" class="form-control" multiple />
+          </div>
 
-        <div class="mb-3 row">
-          <div class="col-md-12">
-            <label class="form-label fw-semibold">Nama Perusahaan</label>
-            <select id="ptSelect" class="form-select"></select>
-          </div>
-        </div>
-        <!-- Kurs & Valuta -->
-        <div class="row">
-          <div class="col-md-3">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Kurs</label>
-              <input
-                type="text"
-                id="kurs"
-                class="form-control"
-                placeholder="Kurs Mingguan"
-              />
+          <div class="row mb-3">
+            <div class="col-md mt-3">
+              <label class="form-label fw-semibold">Nama Perusahaan</label>
+              <select id="ptSelect" class="form-select"></select>
             </div>
-          </div>
-          <div class="col-md-3">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Valuta</label>
-              <select id="valutaSelect" class="form-select">
-                <option value="USD" selected>USD</option>
-                <option value="IDR">IDR</option>
-              </select>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label class="form-label fw-semibold">Jenis Transaksi</label>
-            <select id="jenisTrx" class="form-select">
-              <option value="PENYERAHAN BKP" selected>
-                1 - PENYERAHAN BKP
-              </option>
-              <option value="PENYERAHAN JKP">2 - PENYERAHAN JKP</option>
-              <option value="RETUR">3 - RETUR</option>
-              <option value="NON PENYERAHAN">4 - NON PENYERAHAN</option>
-              <option value="LAINNYA">5 - LAINNYA</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <div class="mb-3">
+            <div class="col-md mt-3">
               <label class="form-label fw-semibold">Filter Hasil</label>
               <select id="filter" class="form-select">
                 <option value="all">Semua</option>
@@ -90,32 +55,77 @@
               </select>
             </div>
           </div>
+          <!-- Kurs & Valuta -->
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Kurs</label>
+              <input
+                type="text"
+                id="kurs"
+                class="form-control"
+                placeholder="Kurs Mingguan"
+              />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Valuta</label>
+              <select id="valutaSelect" class="form-select">
+                <option value="USD" selected>USD</option>
+                <option value="IDR">IDR</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-semibold">Jenis Transaksi</label>
+              <select id="jenisTrx" class="form-select">
+                <option value="PENYERAHAN BKP" selected>
+                  1 - PENYERAHAN BKP
+                </option>
+                <option value="PENYERAHAN JKP">2 - PENYERAHAN JKP</option>
+                <option value="RETUR">3 - RETUR</option>
+                <option value="NON PENYERAHAN">4 - NON PENYERAHAN</option>
+                <option value="LAINNYA">5 - LAINNYA</option>
+              </select>
+            </div>
+            <div class="col-md-12 mb-3" id="exBCWrapper" style="display: none">
+              <label for="exBC" class="form-label fw-semibold"
+                >Tambahkan Ex BC</label
+              >
+              <textarea
+                class="form-control"
+                name="exBC"
+                id="exBC"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Button -->
+          <button id="btnCheck" class="btn btn-navy fw-bold w-100">
+            Cross Check
+          </button>
         </div>
 
-        <!-- Button -->
-        <button id="btnCheck" class="btn btn-navy fw-bold w-100">
-          Cross Check
-        </button>
-      </div>
-
-      <!-- Hasil -->
-      <h2 class="fw-bold mb-3 text-navy">Hasil Pengecekan</h2>
-      <div class="card shadow-lg">
-        <div class="card-body p-0">
-          <table class="table table-bordered table-hover mb-0" id="resultTable">
-            <thead>
-              <tr>
-                <th>PEMERIKSAAN</th>
-                <th>DRAFT EXIM</th>
-                <th>DATA INV & PL</th>
-                <th>HASIL</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <!-- Hasil -->
+        <h2 class="fw-bold mb-3 text-navy">Hasil Pengecekan</h2>
+        <div class="card shadow-lg">
+          <div class="card-body p-0">
+            <table
+              class="table table-bordered table-hover mb-0"
+              id="resultTable"
+            >
+              <thead>
+                <tr>
+                  <th>PEMERIKSAAN</th>
+                  <th>DRAFT EXIM</th>
+                  <th>DATA INV & PL</th>
+                  <th>HASIL</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
 
     <!-- 🌙 FOOTER -->
     <footer class="main-footer">
@@ -128,6 +138,8 @@
     <script src="../js/utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+      const jenisTrxSelect = document.getElementById("jenisTrx");
+      const exBCWrapper = document.getElementById("exBCWrapper");
       async function loadPTDropdown() {
         let mappings = {};
 
@@ -144,8 +156,84 @@
           ptSelect.innerHTML += `<option value="${pt}">${pt}</option>`;
         });
       }
+      function toggleExBC() {
+        const value = jenisTrxSelect.value;
+        if (value === "RETUR" || value === "LAINNYA") {
+          exBCWrapper.style.display = "block";
+        } else {
+          exBCWrapper.style.display = "none";
+          document.getElementById("exBC").value = "";
+        }
+      }
 
+      jenisTrxSelect.addEventListener("change", toggleExBC);
+
+      toggleExBC();
       loadPTDropdown();
+
+      document.getElementById("btnCheck").addEventListener("click", () => {
+        const jenisTrx = document.getElementById("jenisTrx").value;
+
+        // hanya parse jika RETUR / LAINNYA
+        if (jenisTrx === "RETUR" || jenisTrx === "LAINNYA") {
+          const exBCText = document.getElementById("exBC").value;
+
+          const parsedExBC = parseExBC(exBCText);
+
+          console.log("HASIL PARSING EX BC:", parsedExBC);
+
+          // optional: validasi
+          if (parsedExBC.length === 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "Ex BC kosong / format salah",
+              text: "Pastikan format Ex BC sudah benar.",
+            });
+            return;
+          }
+        }
+
+        function parseExBC(text) {
+          const lines = text
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+          const result = [];
+
+          for (const line of lines) {
+            // Contoh: 27 = 012345, 023456 (2025-10-03, 2025-04-19)
+            const match = line.match(/^(\d+)\s*=\s*([0-9,\s]+)\s*\(([^)]+)\)$/);
+
+            if (!match) {
+              console.warn("Format tidak valid:", line);
+              continue;
+            }
+
+            const jenisDokumen = match[1];
+
+            const nomorList = match[2].split(",").map((n) => n.trim());
+
+            const tanggalList = match[3].split(",").map((t) => t.trim());
+
+            const items = nomorList.map((nomor, idx) => ({
+              nomor,
+              tanggal: tanggalList[idx] || null,
+            }));
+
+            result.push({
+              jenisDokumen,
+              items,
+            });
+          }
+
+          return result;
+        }
+        const exBCText = document.getElementById("exBC").value;
+        const parsedExBC = parseExBC(exBCText);
+
+        console.log(parsedExBC);
+      });
     </script>
   </body>
 </html>

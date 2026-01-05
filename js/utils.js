@@ -17,9 +17,16 @@ function getCellValue(sheet, cell) {
   return c ? c.v : "";
 }
 
+// abis diganti
 function getCellValueRC(sheet, r, c) {
   const cell = sheet[XLSX.utils.encode_cell({ r, c })];
-  return cell ? cell.v : "";
+  if (!cell) return "";
+
+  // PRIORITAS: teks tampilan (menjaga leading zero)
+  if (cell.w !== undefined) return String(cell.w).trim();
+
+  // fallback
+  return String(cell.v ?? "").trim();
 }
 
 // Normalisasi kurs (contoh: "16.460,00" -> 16460)

@@ -310,10 +310,18 @@ function applyQuantity() {
     });
 
   const row = [...currentEkstrRows[index]];
-  const qtyAwal = parseFloat(row[8]) || 1;
-  const cifAwal = parseFloat(row[20]) || 0;
-  const cifRupiahAwal = parseFloat(row[21]) || 0;
-  const ndpbm = parseFloat(row[22]) || 1;
+
+  // 🔹 Kolom sesuai ekstraksiCols
+  const qtyIndex = 9; // JUMLAH SATUAN
+  const cifIndex = 22; // CIF
+  const cifRpIndex = 23; // CIF RUPIAH
+  const ndpbmIndex = 24; // NDPBM
+  const hargaIndex = 25; // HARGA PENYERAHAN
+
+  const qtyAwal = parseFloat(row[qtyIndex]) || 1;
+  const cifAwal = parseFloat(row[cifIndex]) || 0;
+  const cifRupiahAwal = parseFloat(row[cifRpIndex]) || 0;
+  const ndpbm = parseFloat(row[ndpbmIndex]) || 1;
 
   const unitCIF = cifAwal / qtyAwal;
   const unitCIFRp = cifRupiahAwal / qtyAwal;
@@ -322,10 +330,11 @@ function applyQuantity() {
   const cifRpBaru = unitCIFRp * qty;
   const hargaBaru = cifBaru * ndpbm;
 
-  row[8] = formatNumber(qty);
-  row[20] = formatNumber(cifBaru);
-  row[21] = formatNumber(cifRpBaru);
-  row[23] = formatNumber(hargaBaru);
+  // Update row dengan nilai baru
+  row[qtyIndex] = formatNumber(qty);
+  row[cifIndex] = formatNumber(cifBaru);
+  row[cifRpIndex] = formatNumber(cifRpBaru);
+  row[hargaIndex] = formatNumber(hargaBaru);
 
   currentEkstrRows[index] = row;
 

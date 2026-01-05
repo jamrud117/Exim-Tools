@@ -75,7 +75,7 @@ async function processFiles(files) {
         icon: "error",
         title: "Oops...",
         scrollbarPadding: false,
-        text: "Tidak bisa mendeteksi file Draft / INV / PL.\nPastikan struktur dan isi file sudah benar.",
+        text: "Tidak bisa mendeteksi file DRAFT / INV / PL.\nPastikan struktur dan isi file sudah benar.",
       });
 
       console.error({ sheetPL, sheetINV, sheetsDATA });

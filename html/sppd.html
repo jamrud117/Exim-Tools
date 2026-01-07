@@ -138,8 +138,6 @@
     <script src="../js/utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-      const jenisTrxSelect = document.getElementById("jenisTrx");
-      const exBCWrapper = document.getElementById("exBCWrapper");
       async function loadPTDropdown() {
         let mappings = {};
 
@@ -156,84 +154,7 @@
           ptSelect.innerHTML += `<option value="${pt}">${pt}</option>`;
         });
       }
-      function toggleExBC() {
-        const value = jenisTrxSelect.value;
-        if (value === "RETUR" || value === "LAINNYA") {
-          exBCWrapper.style.display = "block";
-        } else {
-          exBCWrapper.style.display = "none";
-          document.getElementById("exBC").value = "";
-        }
-      }
-
-      jenisTrxSelect.addEventListener("change", toggleExBC);
-
-      toggleExBC();
       loadPTDropdown();
-
-      document.getElementById("btnCheck").addEventListener("click", () => {
-        const jenisTrx = document.getElementById("jenisTrx").value;
-
-        // hanya parse jika RETUR / LAINNYA
-        if (jenisTrx === "RETUR" || jenisTrx === "LAINNYA") {
-          const exBCText = document.getElementById("exBC").value;
-
-          const parsedExBC = parseExBC(exBCText);
-
-          console.log("HASIL PARSING EX BC:", parsedExBC);
-
-          // optional: validasi
-          if (parsedExBC.length === 0) {
-            Swal.fire({
-              icon: "warning",
-              title: "Ex BC kosong / format salah",
-              text: "Pastikan format Ex BC sudah benar.",
-            });
-            return;
-          }
-        }
-
-        function parseExBC(text) {
-          const lines = text
-            .split("\n")
-            .map((l) => l.trim())
-            .filter(Boolean);
-
-          const result = [];
-
-          for (const line of lines) {
-            // Contoh: 27 = 012345, 023456 (2025-10-03, 2025-04-19)
-            const match = line.match(/^(\d+)\s*=\s*([0-9,\s]+)\s*\(([^)]+)\)$/);
-
-            if (!match) {
-              console.warn("Format tidak valid:", line);
-              continue;
-            }
-
-            const jenisDokumen = match[1];
-
-            const nomorList = match[2].split(",").map((n) => n.trim());
-
-            const tanggalList = match[3].split(",").map((t) => t.trim());
-
-            const items = nomorList.map((nomor, idx) => ({
-              nomor,
-              tanggal: tanggalList[idx] || null,
-            }));
-
-            result.push({
-              jenisDokumen,
-              items,
-            });
-          }
-
-          return result;
-        }
-        const exBCText = document.getElementById("exBC").value;
-        const parsedExBC = parseExBC(exBCText);
-
-        console.log(parsedExBC);
-      });
     </script>
   </body>
 </html>

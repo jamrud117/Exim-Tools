@@ -297,3 +297,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #newJenisBarang {
   cursor: text;
 }
+
+.choices__list--dropdown {
+  max-height: 200px; /* kira-kira 5 item */
+  overflow-y: auto;
+}
+/* Fokus ke search, bukan list panjang */
+.choices__list--dropdown .choices__item {
+  white-space: nowrap;
+}

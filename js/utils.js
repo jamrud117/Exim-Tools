@@ -22,10 +22,23 @@ function getCellValueRC(sheet, r, c) {
   const cell = sheet[XLSX.utils.encode_cell({ r, c })];
   if (!cell) return "";
 
-  // PRIORITAS: teks tampilan (menjaga leading zero)
-  if (cell.w !== undefined) return String(cell.w).trim();
+  // HANYA ambil cell.w jika cell adalah TEXT/FORMATTED IDENTIFIER
+  if (cell.t === "s") return String(cell.v).trim();
 
-  // fallback
+  // Number → ambil value asli
+  return cell.v ?? "";
+}
+
+function getCellTextRC(sheet, r, c) {
+  const cell = sheet[XLSX.utils.encode_cell({ r, c })];
+  if (!cell) return "";
+
+  // Jika TEXT
+  if (cell.t === "s") return String(cell.v).trim();
+
+  // Jika NUMBER → ambil tampilan Excel
+  if (cell.t === "n" && cell.w) return String(cell.w).trim();
+
   return String(cell.v ?? "").trim();
 }
 

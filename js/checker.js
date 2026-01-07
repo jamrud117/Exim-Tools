@@ -27,16 +27,31 @@ function parseExBC(text) {
   const result = [];
 
   for (const line of lines) {
-    const match = line.match(/^(\d+)\s*=\s*([0-9,\s]+)\s*\(([^)]+)\)$/);
+    const match = line.match(
+      /^(\d+)\s*=\s*([0-9,\s]+)(?:\s*\(([^)]+)\)|\s+(.+))$/
+    );
 
     if (!match) continue;
 
     const jenisDokumen = match[1];
-    const nomorList = match[2].split(",").map((n) => n.trim());
-    const tanggalList = match[3].split(",").map((t) => t.trim());
+
+    const nomorList = match[2]
+      .split(",")
+      .map((n) => n.trim())
+      .filter(Boolean);
+
+    // tanggal WAJIB ada di salah satu group
+    const tanggalRaw = match[3] ?? match[4];
+
+    if (!tanggalRaw) continue; // safety net
+
+    const tanggalList = tanggalRaw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
 
     const items = nomorList.map((nomor, idx) => ({
-      nomor,
+      nomor: String(nomor).trim(),
       tanggal: tanggalList[idx] || "",
     }));
 
@@ -105,7 +120,7 @@ function addResult(
   unitForData = undefined
 ) {
   // --- KHUSUS NPWP: tampilkan RAW, jangan formatValue ---
-  if (String(check).toUpperCase() === "NPWP") {
+  if (["NPWP", "NOMOR DAFTAR"].includes(String(check).toUpperCase())) {
     const tbody = document.querySelector("#resultTable tbody");
     const row = document.createElement("tr");
 
@@ -169,7 +184,8 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
   // Helper umum
   const normalize = (v) => {
     if (v === null || v === undefined) return "";
-    if (!isNaN(v)) return parseFloat(v);
+    if (typeof v === "number") return v;
+
     return String(v).trim();
   };
   const isEqual = (a, b) => {
@@ -576,12 +592,15 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const tanggalArr = [];
 
     for (let r = range.s.r; r <= range.e.r; r++) {
-      const kode = getCellValueRC(sheet, r, 2); // kolom KODE DOKUMEN
-      if (String(kode).trim() === String(kodeDokumen)) {
-        const nomor = getCellValueRC(sheet, r, 3); // NOMOR
-        const tanggal = parseExcelDate(getCellValueRC(sheet, r, 4)); // TANGGAL
+      const kode = getCellValueRC(sheet, r, 2);
 
-        if (nomor) nomorArr.push(String(nomor).trim());
+      if (String(kode).trim() === String(kodeDokumen)) {
+        // 🔥 AMBIL TEXT MURNI
+        const nomorRaw = getCellTextRC(sheet, r, 3);
+        if (nomorRaw) nomorArr.push(String(nomorRaw).trim());
+
+        const tanggalRaw = getCellValueRC(sheet, r, 4);
+        const tanggal = parseExcelDate(tanggalRaw);
         if (tanggal) tanggalArr.push(tanggal);
       }
     }

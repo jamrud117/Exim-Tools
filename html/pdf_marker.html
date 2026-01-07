@@ -125,6 +125,12 @@
             <button onclick="downloadAllPDF()" class="btn btn-primary w-100">
               Download PDF
             </button>
+            <button
+              onclick="previewAllMergedPDF()"
+              class="btn btn-secondary w-100"
+            >
+              Print Preview
+            </button>
           </div>
         </div>
       </div>
@@ -190,6 +196,43 @@
         </div>
       </div>
     </div>
+
+    <!-- ================= PRINT PREVIEW MODAL ================= -->
+    <div
+      class="modal fade"
+      id="printPreviewModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div
+        class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
+      >
+        <div class="modal-content">
+          <div class="modal-header" id="print-preview">
+            <h5 class="modal-title">Print Preview PDF</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+
+          <div class="modal-body p-0" id="print-preview">
+            <iframe
+              id="pdf-preview-frame"
+              style="width: 100%; height: 80vh"
+            ></iframe>
+          </div>
+
+          <div class="modal-footer" id="print-preview">
+            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 🌙 FOOTER -->
     <footer class="main-footer">
       <p>© 2025 YXF Tools — All rights reserved | Made with 💡 by YF</p>
@@ -197,5 +240,6 @@
 
     <!-- ============= JAVASCRIPT LOGIC ============= -->
     <script src="../js/pdf_maker.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

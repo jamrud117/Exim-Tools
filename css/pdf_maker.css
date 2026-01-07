@@ -183,3 +183,15 @@ body {
 #marker-box.hidden {
   display: none !important;
 }
+
+#print-preview {
+  background-color: #0d1524;
+  color: #ffff;
+}
+#printPreviewModal .btn-close {
+  filter: invert(1);
+}
+
+.modal-body {
+  overflow: hidden;
+}

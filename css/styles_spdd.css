@@ -146,6 +146,11 @@ body.swal2-shown {
   margin: 0;
 }
 
+.prim-bg td {
+  background-color: #1b2a49;
+  color: #fff;
+}
+
 /* Responsive Navbar */
 @media (max-width: 700px) {
   .nav-container {

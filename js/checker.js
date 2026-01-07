@@ -65,8 +65,17 @@ function addExBCHeader(jenisDokumen) {
   const tbody = document.querySelector("#resultTable tbody");
   const tr = document.createElement("tr");
 
-  tr.classList.add("fw-bold", "barang-header", "table-info");
+  tr.classList.add("fw-bold", "exbc-header", "prim-bg");
   tr.innerHTML = `<td colspan="4">Ex BC ${jenisDokumen}</td>`;
+
+  tbody.appendChild(tr);
+}
+function addGeneralHeader() {
+  const tbody = document.querySelector("#resultTable tbody");
+  const tr = document.createElement("tr");
+
+  tr.classList.add("fw-bold", "general-header", "prim-bg");
+  tr.innerHTML = `<td colspan="4">General Checking</td>`;
 
   tbody.appendChild(tr);
 }
@@ -117,7 +126,8 @@ function addResult(
   isMatch,
   isQty = false,
   unitForRef = "",
-  unitForData = undefined
+  unitForData = undefined,
+  group = "general"
 ) {
   // --- KHUSUS NPWP: tampilkan RAW, jangan formatValue ---
   if (["NPWP", "NOMOR DAFTAR"].includes(String(check).toUpperCase())) {
@@ -131,7 +141,7 @@ function addResult(
       <td>${isMatch ? "Sama" : "Beda"}</td>
     `;
 
-    row.classList.add(isMatch ? "match" : "mismatch");
+    row.classList.add(isMatch ? "match" : "mismatch", group);
     tbody.appendChild(row);
     return;
   }
@@ -145,7 +155,7 @@ function addResult(
     <td>${formatValue(ref, isQty, unitForRef)}</td>
     <td>${isMatch ? "Sama" : "Beda"}</td>
   `;
-  row.classList.add(isMatch ? "match" : "mismatch");
+  row.classList.add(isMatch ? "match" : "mismatch", group);
   tbody.appendChild(row);
 }
 
@@ -317,18 +327,24 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
         nopenMatch,
         false,
         "",
-        ""
+        "",
+        "exbc"
       );
 
       addResult(
         "Tanggal Daftar",
         draft.tanggalText,
         invTanggalArr.join(", "),
-        tanggalMatch
+        tanggalMatch,
+        false,
+        "",
+        "",
+        "exbc"
       );
     });
   }
   const isMatchTrx = jenisTransaksi.toUpperCase() === selectedTrx.toUpperCase();
+  addGeneralHeader();
   addResult("Jenis Transaksi", jenisTransaksi, selectedTrx, isMatchTrx);
 
   // ---------- Customer Name -------------
@@ -595,13 +611,11 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const kode = getCellValueRC(sheet, r, 2);
 
       if (String(kode).trim() === String(kodeDokumen)) {
-        // 🔥 AMBIL TEXT MURNI
         const nomorRaw = getCellTextRC(sheet, r, 3);
-        if (nomorRaw) nomorArr.push(String(nomorRaw).trim());
-
         const tanggalRaw = getCellValueRC(sheet, r, 4);
-        const tanggal = parseExcelDate(tanggalRaw);
-        if (tanggal) tanggalArr.push(tanggal);
+
+        if (nomorRaw) nomorArr.push(String(nomorRaw).trim());
+        if (tanggalRaw) tanggalArr.push(parseExcelDate(tanggalRaw));
       }
     }
 
@@ -957,11 +971,31 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     barangCounter++;
   }
 
-  // Collapsible rows
-  document.querySelectorAll(".barang-header").forEach((header) => {
+  // ---------- COLLAPSIBLE EX BC ----------
+  document.querySelectorAll(".exbc-header").forEach((header) => {
     header.addEventListener("click", () => {
       let next = header.nextElementSibling;
-      while (next && !next.classList.contains("barang-header")) {
+      while (
+        next &&
+        !next.classList.contains("exbc-header") &&
+        !next.classList.contains("general-header") &&
+        !next.classList.contains("barang-header")
+      ) {
+        next.style.display = next.style.display === "none" ? "" : "none";
+        next = next.nextElementSibling;
+      }
+    });
+  });
+
+  // ---------- COLLAPSIBLE GENERAL CHECKING ----------
+  document.querySelectorAll(".general-header").forEach((header) => {
+    header.addEventListener("click", () => {
+      let next = header.nextElementSibling;
+      while (
+        next &&
+        !next.classList.contains("general-header") &&
+        !next.classList.contains("barang-header")
+      ) {
         next.style.display = next.style.display === "none" ? "" : "none";
         next = next.nextElementSibling;
       }

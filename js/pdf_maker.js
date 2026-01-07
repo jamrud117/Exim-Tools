@@ -44,17 +44,27 @@ function getHariFromTanggal(tgl) {
    TAMBAH 15 MENIT UNTUK GATE OUT
 ================================ */
 function add15Minutes(jamStr) {
-  if (!jamStr || !jamStr.includes(".")) return "";
+  if (!jamStr) return "";
 
-  let [hh, mm] = jamStr.split(".").map(Number);
+  // deteksi separator: "." atau ":"
+  const separator = jamStr.includes(".")
+    ? "."
+    : jamStr.includes(":")
+    ? ":"
+    : null;
+  if (!separator) return "";
+
+  let [hh, mm] = jamStr.split(separator).map(Number);
+  if (isNaN(hh) || isNaN(mm)) return "";
 
   let total = hh * 60 + mm + 15;
-  hh = Math.floor(total / 60);
+  hh = Math.floor(total / 60) % 24;
   mm = total % 60;
 
-  if (hh >= 24) hh -= 24;
-
-  return `${String(hh).padStart(2, "0")}.${String(mm).padStart(2, "0")}`;
+  return `${String(hh).padStart(2, "0")}${separator}${String(mm).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 /* ===============================
@@ -425,5 +435,94 @@ async function downloadAllPDF() {
   } catch (err) {
     console.error("Gagal membuat ZIP:", err);
     alert("Terjadi kesalahan saat membuat ZIP.");
+  }
+}
+
+/* ===============================
+   PRINT PREVIEW (MODAL) – MULTI FILE
+================================ */
+let previewBlobUrl = null;
+let previewIndex = 0;
+
+async function previewPDFModal(index = 0) {
+  if (!pdfFiles.length) {
+    alert("Upload PDF terlebih dahulu.");
+    return;
+  }
+
+  if (!currentViewport) {
+    alert("Tunggu preview PDF siap.");
+    return;
+  }
+
+  // jaga index tetap valid
+  if (index < 0) index = 0;
+  if (index >= pdfFiles.length) index = pdfFiles.length - 1;
+  previewIndex = index;
+
+  try {
+    if (previewBlobUrl) {
+      URL.revokeObjectURL(previewBlobUrl);
+      previewBlobUrl = null;
+    }
+
+    const file = pdfFiles[previewIndex];
+    const buffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(buffer);
+
+    const processedBytes = await processSinglePDF(uint8Array);
+    const blob = new Blob([processedBytes], { type: "application/pdf" });
+
+    previewBlobUrl = URL.createObjectURL(blob);
+
+    document.getElementById("pdf-preview-frame").src = previewBlobUrl;
+
+    new bootstrap.Modal(document.getElementById("printPreviewModal")).show();
+  } catch (err) {
+    console.error(err);
+    alert("Gagal membuat preview PDF.");
+  }
+}
+
+async function previewAllMergedPDF() {
+  if (!pdfFiles.length) {
+    alert("Upload PDF terlebih dahulu.");
+    return;
+  }
+
+  if (!currentViewport) {
+    alert("Tunggu preview PDF siap.");
+    return;
+  }
+
+  try {
+    if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+
+    const mergedPdf = await PDFLib.PDFDocument.create();
+
+    for (const file of pdfFiles) {
+      const buffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(buffer);
+
+      const processedBytes = await processSinglePDF(uint8Array);
+      const tempPdf = await PDFLib.PDFDocument.load(processedBytes);
+
+      const copiedPages = await mergedPdf.copyPages(
+        tempPdf,
+        tempPdf.getPageIndices()
+      );
+      copiedPages.forEach((p) => mergedPdf.addPage(p));
+    }
+
+    const finalBytes = await mergedPdf.save();
+    const blob = new Blob([finalBytes], { type: "application/pdf" });
+
+    previewBlobUrl = URL.createObjectURL(blob);
+    document.getElementById("pdf-preview-frame").src = previewBlobUrl;
+
+    new bootstrap.Modal(document.getElementById("printPreviewModal")).show();
+  } catch (err) {
+    console.error(err);
+    alert("Gagal membuat preview gabungan PDF.");
   }
 }

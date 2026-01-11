@@ -42,38 +42,31 @@
           </div>
 
           <div class="row mb-3">
-            <div class="col-md mt-3">
+            <div class="col-md">
               <label class="form-label fw-semibold">Nama Perusahaan</label>
               <select id="ptSelect" class="form-select"></select>
             </div>
-            <div class="col-md mt-3">
-              <label class="form-label fw-semibold">Filter Hasil</label>
-              <select id="filter" class="form-select">
-                <option value="all">Semua</option>
-                <option value="sama">Sama</option>
-                <option value="beda">Beda</option>
-              </select>
-            </div>
           </div>
-          <!-- Kurs & Valuta -->
+          <!-- Kurs, Valuta, jenis transaksi -->
           <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md mb-3">
               <label class="form-label fw-semibold">Kurs</label>
               <input
                 type="text"
                 id="kurs"
                 class="form-control"
-                placeholder="Kurs Mingguan"
+                placeholder="Kurs BC"
+                disabled
               />
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md mb-3">
               <label class="form-label fw-semibold">Valuta</label>
               <select id="valutaSelect" class="form-select">
                 <option value="USD" selected>USD</option>
                 <option value="IDR">IDR</option>
               </select>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md mb-3">
               <label class="form-label fw-semibold">Jenis Transaksi</label>
               <select id="jenisTrx" class="form-select">
                 <option value="PENYERAHAN BKP" selected>
@@ -83,6 +76,14 @@
                 <option value="RETUR">3 - RETUR</option>
                 <option value="NON PENYERAHAN">4 - NON PENYERAHAN</option>
                 <option value="LAINNYA">5 - LAINNYA</option>
+              </select>
+            </div>
+            <div class="col-md mb-3">
+              <label class="form-label fw-semibold">Filter Hasil</label>
+              <select id="filter" class="form-select">
+                <option value="all">Semua</option>
+                <option value="sama">Sama</option>
+                <option value="beda">Beda</option>
               </select>
             </div>
             <div class="col-md-12 mb-3" id="exBCWrapper" style="display: none">

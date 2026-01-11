@@ -107,16 +107,6 @@ document.getElementById("btnCheck").addEventListener("click", () => {
       return;
     }
   }
-  if (typeof checkAll === "function") {
-    checkAll(
-      window.sheetPL,
-      window.sheetINV,
-      window.sheetsDATA,
-      window.kurs,
-      window.kontrakNo,
-      window.kontrakTgl
-    );
-  }
 });
 
 function addResult(
@@ -189,7 +179,45 @@ function formatRupiah(value) {
 
 // ---------- Fungsi Utama ----------
 function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
+  const missing = [];
+
+  if (!sheetPL || !sheetPL["!ref"]) missing.push("PL");
+  if (!sheetINV || !sheetINV["!ref"]) missing.push("INV");
+  if (!sheetsDATA?.HEADER) missing.push("DATA.HEADER");
+  if (!sheetsDATA?.DOKUMEN) missing.push("DATA.DOKUMEN");
+
+  if (missing.length) {
+    console.error("Missing sheets:", {
+      missing,
+      sheetPL,
+      sheetINV,
+      sheetsDATA,
+    });
+
+    Swal.fire({
+      icon: "error",
+      title: "File tidak lengkap",
+      html: `File berikut tidak terdeteksi:<br><b>${missing.join(", ")}</b>`,
+    });
+    return;
+  }
   document.querySelector("#resultTable tbody").innerHTML = "";
+
+  // === AMBIL KURS DARI DATA.HEADER ===
+  const kursCell = getCellValue(sheetsDATA.HEADER, "BW2");
+
+  const kursParsed = parseKurs(kursCell);
+
+  if (!kursParsed || isNaN(kursParsed)) {
+    console.error("❌ Kurs tidak valid:", kursCell);
+
+    Swal.fire({
+      icon: "error",
+      title: "Kurs tidak ditemukan",
+      html: `Nilai kurs di file DATA tidak valid:<br><b>${kursCell}</b>`,
+    });
+    return;
+  }
 
   // Helper umum
   const normalize = (v) => {
@@ -212,7 +240,9 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     hitungKemasanNWGW(sheetPL);
 
   // ---------- Data INV ----------
-  const rangeINV = XLSX.utils.decode_range(sheetINV["!ref"]);
+  const rangeINV = sheetINV?.["!ref"]
+    ? XLSX.utils.decode_range(sheetINV["!ref"])
+    : null;
   const ptSelect = document.getElementById("ptSelect");
   const mappings = JSON.parse(localStorage.getItem("companyMappings")) || {};
 
@@ -266,10 +296,8 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     for (let r = invCols.headerRow + 1; r <= rangeINV.e.r; r++) {
       const nomorSeri = getCellValue(sheetINV, "A" + (r + 1));
       if (!nomorSeri || isNaN(nomorSeri)) continue;
-      cifSum +=
-        parseFloat(
-          getCellValue(sheetINV, XLSX.utils.encode_cell({ r, c: invCols.cif }))
-        ) || 0;
+      const val = getCellValueRC(sheetINV, r, invCols.cif);
+      cifSum += parseFloat(val) || 0;
     }
   }
 
@@ -384,10 +412,11 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     cifMatch,
     false
   );
+  document.getElementById("kurs").value = kursParsed.toLocaleString("id-ID");
 
   // ---------- Harga Penyerahan ----------
   const hargaPenyerahan = getCellValue(sheetsDATA.HEADER, "BV2");
-  const hargaPenyerahanCalc = cifSum * kurs;
+  const hargaPenyerahanCalc = cifSum * kursParsed;
   addResult(
     "Harga Penyerahan",
     formatRupiah(hargaPenyerahan),
@@ -397,7 +426,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
 
   // ---------- PPN 11% ----------
   const dasarPengenaanPajak = getCellValue(sheetsDATA.HEADER, "BY2");
-  const ppnCalc = cifSum * kurs * 0.11;
+  const ppnCalc = cifSum * kursParsed * 0.11;
   addResult(
     "PPN 11%",
     formatRupiah(dasarPengenaanPajak),
@@ -972,33 +1001,35 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
   }
 
   // ---------- COLLAPSIBLE EX BC ----------
-  document.querySelectorAll(".exbc-header").forEach((header) => {
-    header.addEventListener("click", () => {
-      let next = header.nextElementSibling;
-      while (
-        next &&
-        !next.classList.contains("exbc-header") &&
-        !next.classList.contains("general-header") &&
-        !next.classList.contains("barang-header")
-      ) {
-        next.style.display = next.style.display === "none" ? "" : "none";
-        next = next.nextElementSibling;
-      }
-    });
-  });
+  function bindCollapsible(headersSelector, stopClasses) {
+    document.querySelectorAll(headersSelector).forEach((header) => {
+      if (header.dataset.bound) return;
+      header.dataset.bound = "1";
 
-  // ---------- COLLAPSIBLE GENERAL CHECKING ----------
-  document.querySelectorAll(".general-header").forEach((header) => {
-    header.addEventListener("click", () => {
-      let next = header.nextElementSibling;
-      while (
-        next &&
-        !next.classList.contains("general-header") &&
-        !next.classList.contains("barang-header")
-      ) {
-        next.style.display = next.style.display === "none" ? "" : "none";
-        next = next.nextElementSibling;
-      }
+      header.addEventListener("click", () => {
+        let next = header.nextElementSibling;
+
+        while (
+          next &&
+          !stopClasses.some((cls) => next.classList.contains(cls))
+        ) {
+          next.style.display = next.style.display === "none" ? "" : "none";
+          next = next.nextElementSibling;
+        }
+      });
     });
-  });
+  }
+  bindCollapsible(".exbc-header", [
+    "exbc-header",
+    "general-header",
+    "barang-header",
+  ]);
+
+  bindCollapsible(".general-header", ["general-header", "barang-header"]);
+
+  bindCollapsible(".barang-header", [
+    "barang-header",
+    "exbc-header",
+    "general-header",
+  ]);
 }

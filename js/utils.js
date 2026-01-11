@@ -85,27 +85,47 @@ function cleanNumber(val) {
     .trim();
 }
 
-// Deteksi jenis file: DATA, PL, atau INV
 function detectFileType(workbook) {
-  if (workbook.SheetNames.includes("HEADER")) return "DATA";
+  const names = workbook.SheetNames.map((s) => s.toUpperCase());
+
+  // ====== DATA (Draft EXIM) ======
+  if (
+    names.includes("HEADER") ||
+    names.includes("DOKUMEN") ||
+    names.includes("ENTITAS") ||
+    names.includes("BARANG")
+  ) {
+    return "DATA";
+  }
+
+  // ====== Cek isi sheet pertama ======
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   if (!sheet || !sheet["!ref"]) return "INV";
+
   const range = XLSX.utils.decode_range(sheet["!ref"]);
+
+  let foundPacking = false;
+  let foundGW = false;
+  let foundNW = false;
+
   for (let r = range.s.r; r <= range.e.r; r++) {
     for (let c = range.s.c; c <= range.e.c; c++) {
       const cell = sheet[XLSX.utils.encode_cell({ r, c })];
-      if (cell && typeof cell.v === "string") {
-        const val = cell.v.toString().toUpperCase();
-        if (
-          val.includes("KEMASAN") ||
-          val.includes("GW") ||
-          val.includes("NW")
-        ) {
-          return "PL";
-        }
-      }
+      if (!cell || typeof cell.v !== "string") continue;
+
+      const v = cell.v.toUpperCase();
+
+      if (v.includes("PACKING LIST")) foundPacking = true;
+      if (v.includes("KEMASAN")) foundPacking = true;
+      if (v === "GW" || v.includes("GROSS")) foundGW = true;
+      if (v === "NW" || v.includes("NET")) foundNW = true;
     }
   }
+
+  if (foundPacking || (foundGW && foundNW)) {
+    return "PL";
+  }
+
   return "INV";
 }
 

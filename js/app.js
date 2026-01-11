@@ -25,85 +25,32 @@ document.querySelectorAll(".nav-links a").forEach((link) => {
 
 // === Fungsi utama untuk memproses 3 file ===
 async function processFiles(files) {
-  if (!files || files.length !== 3) {
-    Swal.fire({
-      icon: "error",
-      title: "Oops...",
-      scrollbarPadding: false,
-      text: "Upload 3 file (Draft, INV, PL) terlebih dahulu!",
-    });
+  let sheetPL = null;
+  let sheetINV = null;
+  let sheetsDATA = null;
+  let kontrakNo = "";
+  let kontrakTgl = "";
+
+  for (const file of files) {
+    const wb = await readExcelFile(file);
+    const type = detectFileType(wb);
+
+    if (type === "DATA") sheetsDATA = wb.Sheets;
+    if (type === "INV") sheetINV = wb.Sheets[wb.SheetNames[0]];
+    if (type === "PL") {
+      sheetPL = wb.Sheets[wb.SheetNames[0]];
+      const kontrak = extractKontrakInfoFromPL(sheetPL);
+      kontrakNo = kontrak.kontrakNo;
+      kontrakTgl = kontrak.kontrakTgl;
+    }
+  }
+
+  if (!sheetPL || !sheetINV || !sheetsDATA) {
+    Swal.fire("File belum lengkap");
     return;
   }
 
-  console.log("Mulai proses", files.length, "file...");
-
-  try {
-    // Konversi FileList ke array agar bisa di-loop
-    const fileArray = Array.from(files);
-
-    // Baca workbook dari semua file (hasil Promise.all)
-    const workbooks = await Promise.all(fileArray.map(readExcelFile));
-
-    // Variabel untuk menampung hasil deteksi
-    let sheetPL = null;
-    let sheetINV = null;
-    let sheetsDATA = null;
-
-    // === Deteksi otomatis tipe file ===
-    workbooks.forEach((wb, i) => {
-      const type = detectFileType(wb);
-      console.log(`File ${i + 1}: tipe terdeteksi =`, type);
-
-      if (type === "PL") {
-        sheetPL = wb.Sheets[wb.SheetNames[0]];
-      } else if (type === "INV") {
-        sheetINV = wb.Sheets[wb.SheetNames[0]];
-      } else if (type === "DATA") {
-        sheetsDATA = {
-          HEADER: wb.Sheets["HEADER"],
-          DOKUMEN: wb.Sheets["DOKUMEN"],
-          KEMASAN: wb.Sheets["KEMASAN"],
-          BARANG: wb.Sheets["BARANG"],
-          ENTITAS: wb.Sheets["ENTITAS"],
-        };
-      }
-    });
-
-    // === Validasi hasil deteksi ===
-    if (!sheetPL || !sheetINV || !sheetsDATA) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        scrollbarPadding: false,
-        text: "Tidak bisa mendeteksi file DRAFT / INV / PL.\nPastikan struktur dan isi file sudah benar.",
-      });
-
-      console.error({ sheetPL, sheetINV, sheetsDATA });
-      return;
-    }
-
-    // === Parsing kurs agar input type=number tidak error ===
-    const kursCell = getCellValue(sheetsDATA.HEADER, "BW2");
-    const kursParsed = parseKurs(kursCell) || 1;
-    document.getElementById("kurs").value = kursParsed;
-
-    // === Ambil kontrak dari PL ===
-    const { kontrakNo, kontrakTgl } = extractKontrakInfoFromPL(sheetPL);
-    console.log("Kontrak ditemukan:", kontrakNo, kontrakTgl);
-
-    // === Jalankan pengecekan utama ===
-    checkAll(sheetPL, sheetINV, sheetsDATA, kursParsed, kontrakNo, kontrakTgl);
-
-    console.log("CheckAll selesai dieksekusi ✅");
-  } catch (err) {
-    console.error("Terjadi error saat memproses file:", err);
-    Swal.fire({
-      icon: "error",
-      title: "Oops...",
-      scrollbarPadding: false,
-      text: "Terjadi kesalahan saat memproses file. Lihat konsol (F12) untuk detailnya.",
-    });
-  }
+  checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl);
 }
 
 // === Deteksi otomatis tipe file berdasarkan isi sheet ===

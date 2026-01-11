@@ -54,6 +54,7 @@ body::-webkit-scrollbar {
   border-radius: var(--radius);
   background: var(--card-bg);
   box-shadow: var(--shadow);
+  overflow: visible;
 }
 
 /* LOGO BOX */
@@ -211,7 +212,6 @@ input[type="file"].form-control:hover {
 .table td {
   padding: 12px 16px;
   vertical-align: middle;
-  white-space: nowrap !important; /* << NO WRAP */
 }
 
 .table-striped > tbody > tr > td {
@@ -305,4 +305,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Fokus ke search, bukan list panjang */
 .choices__list--dropdown .choices__item {
   white-space: nowrap;
+}
+
+.prim-bg td {
+  cursor: pointer;
 }

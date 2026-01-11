@@ -21,7 +21,6 @@
     <link rel="stylesheet" href="./css/style_rp.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script defer src="./js/script_rp.js"></script>
   </head>
 
   <body class="d-flex flex-column min-vh-100">
@@ -46,9 +45,7 @@
           <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link active" href="index.html"
-                  >Pelaporan Barang</a
-                >
+                <a class="nav-link" href="index.html">Pelaporan Barang</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="html/Extractor.html"
@@ -139,8 +136,12 @@
                   <div class="col-md-4 mt-2" id="colJenisBC">
                     <label class="form-label fw-semibold">Jenis Laporan</label>
                     <select class="form-select" id="jenisBC">
-                      <option value="Keluar">BC 2.7 Keluar</option>
-                      <option value="Masuk" selected>BC 2.7 Masuk</option>
+                      <option value="BC 2.7 Masuk" selected>
+                        BC 2.7 Masuk
+                      </option>
+                      <option value="BC 2.7 Keluar">BC 2.7 Keluar</option>
+                      <option value="BC 4.0 Masuk">BC 4.0 Masuk</option>
+                      <option value="BC 4.1 Keluar">BC 4.1 Keluar</option>
                     </select>
                   </div>
 
@@ -197,9 +198,9 @@
                     <th>No</th>
                     <th>Jenis Transaksi</th>
                     <th>Nomor Aju</th>
-                    <th>Pengirim</th>
-                    <th>Nomor Pendaftaran</th>
-                    <th>Nomor Segel</th>
+                    <th id="headerPengirim">Pengirim</th>
+                    <th>Nopen</th>
+                    <th>No Segel</th>
                     <th>Jumlah Kemasan</th>
                     <th>Jumlah Barang</th>
                     <th>Tanggal Dokumen</th>
@@ -241,138 +242,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
-    <script>
-      // ===============================
-      // JENIS BARANG - LOCAL STORAGE
-      // ===============================
-      const JENIS_BARANG_KEY = "yxf_jenis_barang";
-
-      function initJenisBarang() {
-        if (!localStorage.getItem(JENIS_BARANG_KEY)) {
-          const defaultJenis = [
-            "INSOLE",
-            "EVA FOOTBED",
-            "TEXTILE",
-            "PU FOAM",
-            "LOGO",
-            "BOX KEMASAN",
-          ];
-          localStorage.setItem(JENIS_BARANG_KEY, JSON.stringify(defaultJenis));
-        }
-      }
-
-      function renderJenisBarangOptions() {
-        const select = document.getElementById("jenisBarang");
-        select.innerHTML = "";
-
-        const data = JSON.parse(localStorage.getItem(JENIS_BARANG_KEY) || "[]");
-
-        data.forEach((item) => {
-          const opt = document.createElement("option");
-          opt.value = item;
-          opt.textContent = item;
-          select.appendChild(opt);
-        });
-      }
-
-      // ===== INIT SEQUENCE (URUTAN WAJIB) =====
-      initJenisBarang();
-      renderJenisBarangOptions();
-
-      const jenisBarangSelect = new Choices("#jenisBarang", {
-        removeItemButton: true,
-        searchEnabled: true,
-        placeholderValue: "Ketik untuk cari / tambah...",
-        searchPlaceholderValue: "Pilih jenis barang",
-        shouldSort: false,
-      });
-
-      // ===============================
-      // TAMBAH JENIS BARANG
-      // ===============================
-      document.getElementById("addJenisBtn").addEventListener("click", () => {
-        const input = document.getElementById("newJenisBarang");
-        const value = input.value.trim().toUpperCase();
-        if (!value) return;
-
-        let data = JSON.parse(localStorage.getItem(JENIS_BARANG_KEY) || "[]");
-
-        if (data.includes(value)) {
-          Swal.fire({
-            icon: "warning",
-            text: "Jenis barang sudah ada!",
-          });
-          return;
-        }
-
-        // simpan ke localStorage
-        data.push(value);
-        localStorage.setItem(JENIS_BARANG_KEY, JSON.stringify(data));
-
-        // tambahkan ke dropdown + auto pilih
-        jenisBarangSelect.setChoices(
-          [{ value, label: value, selected: true }],
-          "value",
-          "label",
-          false
-        );
-
-        input.value = "";
-      });
-
-      // ENTER = TAMBAH
-      document
-        .getElementById("newJenisBarang")
-        .addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            document.getElementById("addJenisBtn").click();
-          }
-        });
-
-      // ===============================
-      // LOGIC LAMA (TIDAK DIUBAH)
-      // ===============================
-      function toggleStatusJalur() {
-        const jenisBC = document.getElementById("jenisBC").value;
-
-        const wrapJalur = document.getElementById("statusJalurWrap");
-        const wrapOverride = document.getElementById("jalurOverrideWrap");
-        const colTanggal = document.getElementById("colTanggal");
-        const colJenisBC = document.getElementById("colJenisBC");
-        const labelTanggal = document.getElementById("labelTanggal");
-
-        if (jenisBC === "Masuk") {
-          labelTanggal.textContent = "Tanggal Masuk";
-
-          wrapJalur.style.display = "none";
-          wrapOverride.style.display = "none";
-
-          colTanggal.classList.remove("col-md-4");
-          colJenisBC.classList.remove("col-md-4");
-
-          colTanggal.classList.add("col-md-6");
-          colJenisBC.classList.add("col-md-6");
-        } else {
-          labelTanggal.textContent = "Tanggal Keluar";
-
-          wrapJalur.style.display = "";
-          wrapOverride.style.display = "";
-
-          colTanggal.classList.remove("col-md-6");
-          colJenisBC.classList.remove("col-md-6");
-
-          colTanggal.classList.add("col-md-4");
-          colJenisBC.classList.add("col-md-4");
-        }
-      }
-
-      document
-        .getElementById("jenisBC")
-        .addEventListener("change", toggleStatusJalur);
-
-      toggleStatusJalur();
-    </script>
+    <script defer src="./js/REPORT/jenisBarang.js"></script>
+    <script defer src="./js/REPORT/uiToggle.js"></script>
+    <script defer src="./js/REPORT/script_rp.js"></script>
   </body>
 </html>

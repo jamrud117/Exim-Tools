@@ -71,23 +71,59 @@ function getEntitas(wb, targetKodeEntitas) {
   return "";
 }
 
-// ---------- ekstraksi data utama dari workbook ----------
-function extractDataFromWorkbook(file, wb) {
-  const jenisBC = document.getElementById("jenisBC").value;
-  const kodeEntitas = jenisBC === "Keluar" ? 8 : 3;
-  const pengirim = getEntitas(wb, kodeEntitas);
-  const bc = getCell(wb, "HEADER", "CP2") || "";
-  const segel = getCell(wb, "HEADER", "BC2") || "";
+function parseJenisBC(raw) {
+  const parts = raw.split(" ");
+  return {
+    bc: parts[0] + " " + parts[1], // "BC 2.7", "BC 4.0", "BC 4.1"
+    arah: parts[2], // "Masuk" atau "Keluar"
+  };
+}
 
-  // ---- KEMASAN ----
+function extractDataFromWorkbook(wb) {
+  const rawBC = document.getElementById("jenisBC").value;
+  const { bc, arah } = parseJenisBC(rawBC);
+
+  // ===============================
+  // TENTUKAN KODE ENTITAS
+  // ===============================
+  let kodeEntitas;
+
+  if (bc === "BC 4.0") {
+    kodeEntitas = 9; // Supplier
+  } else if (bc === "BC 4.1") {
+    kodeEntitas = 8; // Tujuan
+  } else {
+    // BC 2.7
+    // Masuk = Supplier (3)
+    // Keluar = Customer (8)
+    kodeEntitas = arah === "Keluar" ? 8 : 7;
+  }
+
+  // Ambil nama entitas sesuai BC
+  const entitasBC = getEntitas(wb, kodeEntitas);
+  const pengirim = entitasBC;
+
+  // ===============================
+  // HEADER
+  // ===============================
+  const bcNo = getCell(wb, "HEADER", "CP2") || "";
+  const segel = getCell(wb, "HEADER", "BC2") || "";
+  const aju = getCell(wb, "HEADER", "A2") || "";
+  const t = getCell(wb, "HEADER", "CF2");
+  const n2Val = getCell(wb, "HEADER", "N2");
+
+  // ===============================
+  // KEMASAN
+  // ===============================
   const sheetKemasan = wb.Sheets["KEMASAN"];
   let kemasanMap = {};
 
   if (sheetKemasan && sheetKemasan["!ref"]) {
     const dataKemasan = XLSX.utils.sheet_to_json(sheetKemasan, { header: 1 });
     const header = dataKemasan[0] || [];
-    let kodeIdx = -1,
-      jumlahIdx = -1;
+
+    let kodeIdx = -1;
+    let jumlahIdx = -1;
 
     header.forEach((h, i) => {
       const v = String(h || "")
@@ -108,13 +144,13 @@ function extractDataFromWorkbook(file, wb) {
     }
   }
 
-  // ---- BARANG ----
+  // ===============================
+  // BARANG
+  // ===============================
+  const sheetBarang = wb.Sheets["BARANG"];
   let barangMap = {};
-  let barangTotal = 0;
-  let barangUnit = "";
   let namaBarang = [];
 
-  const sheetBarang = wb.Sheets["BARANG"];
   if (sheetBarang && sheetBarang["!ref"]) {
     const dataBarang = XLSX.utils.sheet_to_json(sheetBarang, { header: 1 });
     const header = dataBarang[0] || [];
@@ -128,16 +164,13 @@ function extractDataFromWorkbook(file, wb) {
         .trim()
         .toUpperCase();
       if (v === "URAIAN") uraianIdx = i;
-
       if (v === "JUMLAH" || v === "JUMLAH BARANG" || v === "JUMLAH SATUAN")
         jumlahIdx = i;
-
       if (
         v === "SATUAN" ||
         v === "KODE SATUAN" ||
         v === "SATUAN BARANG" ||
-        v === "KODE SATUAN BARANG" ||
-        v === "KODE SATUAN JUMLAH"
+        v === "KODE SATUAN BARANG"
       )
         satuanIdx = i;
     });
@@ -152,8 +185,6 @@ function extractDataFromWorkbook(file, wb) {
 
       if (qty > 0 && unit) {
         barangMap[unit] = (barangMap[unit] || 0) + qty;
-        barangTotal += qty;
-        if (!barangUnit) barangUnit = unit;
       }
 
       if (uraianIdx !== -1 && row[uraianIdx]) {
@@ -162,10 +193,9 @@ function extractDataFromWorkbook(file, wb) {
     }
   }
 
-  const t = getCell(wb, "HEADER", "CF2");
-  const aju = getCell(wb, "HEADER", "A2") || "";
-  const n2Val = getCell(wb, "HEADER", "N2");
-
+  // ===============================
+  // JENIS TRANSAKSI
+  // ===============================
   const jenisMap = {
     1: "PENYERAHAN BKP",
     2: "PENYERAHAN JKP",
@@ -174,20 +204,20 @@ function extractDataFromWorkbook(file, wb) {
     5: "LAINNYA",
   };
 
+  // ===============================
+  // RETURN
+  // ===============================
   return {
     jenistrx: jenisMap[String(n2Val).trim()] || "TIDAK DIKETAHUI",
     aju,
     pengirim,
-    bc,
+    bc: bcNo,
     segel,
     kemasan: kemasanMap,
-    barang: {
-      map: barangMap,
-      total: barangTotal,
-      unit: barangUnit,
-    },
+    barang: { map: barangMap },
     tanggal: t ? new Date(t) : null,
     namaBarang: [...new Set(namaBarang)],
+    entitasBC,
   };
 }
 
@@ -281,46 +311,36 @@ function parseJalurOverride(text) {
 
 // ---------- generate result text ----------
 function generateResultText(dataArr) {
-  const jenisBC = $("jenisBC").value;
+  const rawBC = $("jenisBC").value;
+  const { bc, arah } = parseJenisBC(rawBC);
 
-  // Ambil nilai dropdown sebagai default jalur
   const defaultJalur = $("statusJalur")?.value || "HIJAU";
-
-  // Ambil override per BC / No Aju dari textarea
   const jalurOverrideMap = parseJalurOverride($("jalurOverride")?.value || "");
 
-  // Ambil jenis barang yang dipilih
-  const jenisBarangArr = getSelectedValues("jenisBarang");
-  const jenisBarang = jenisBarangArr.join(" + ");
+  const jenisBarang = getSelectedValues("jenisBarang").join(" + ");
   const masukTxt = fmtDate(new Date($("masukTgl").value));
 
-  // Ambil list pengirim unik
-  const pengirim = [
-    ...new Set(dataArr.map((d) => d.pengirim).filter(Boolean)),
-  ].join(" | ");
-
+  const bcGrouped = {};
   const bcList = {};
   const segelList = [];
   const kemasanMap = {};
   const barangMap = {};
   const tanggalArr = [];
-  const bcGrouped = {};
 
   // ===============================
-  // Proses tiap data
+  // LOOP DATA
   // ===============================
   dataArr.forEach((d) => {
-    // Jalur = override per BC/No Aju, kalau tidak ada pakai dropdown
     const jalur =
       jalurOverrideMap[d.bc] || jalurOverrideMap[d.aju] || defaultJalur;
 
-    // Key gabungan Jalur + Jenis Transaksi
     const key = `${jalur} | ${d.jenistrx}`;
     if (!bcGrouped[key]) bcGrouped[key] = [];
     if (d.bc) bcGrouped[key].push(d.bc);
 
     if (!bcList[d.jenistrx]) bcList[d.jenistrx] = [];
     if (d.bc) bcList[d.jenistrx].push(d.bc);
+
     if (d.segel) segelList.push(d.segel);
 
     for (const [u, q] of Object.entries(d.kemasan))
@@ -332,57 +352,80 @@ function generateResultText(dataArr) {
     if (d.tanggal) tanggalArr.push(d.tanggal);
   });
 
-  // ================================
-  // FORMAT KHUSUS 2.7 KELUAR
-  // ================================
-  if (jenisBC === "Keluar") {
-    const totalDokumen = dataArr.length;
-    const labelTanggal = "Tanggal Keluar";
+  // ==================================================
+  // ✅ FORMAT KHUSUS BC 4.0 & 4.1
+  // ==================================================
+  if (bc === "BC 4.0" || bc === "BC 4.1") {
+    const is40 = bc === "BC 4.0";
+    const labelEntitas = is40 ? "Supplier" : "Tujuan";
+    const tanggalLabel = arah === "Keluar" ? "Tanggal Keluar" : "Tanggal Masuk";
 
-    // Urutan jalur: Hijau → Merah → Kuning
+    const entitas = [
+      ...new Set(dataArr.map((d) => d.entitasBC).filter(Boolean)),
+    ].join(" | ");
+
+    return [
+      `*${rawBC}*`,
+      `${labelEntitas} : ${entitas}`,
+      ...Object.entries(bcGrouped).map(
+        ([k, v]) => `No BC (${k}) : ${v.join(", ")}`
+      ),
+      `Jenis Barang : ${jenisBarang}`,
+      `Jumlah barang : ${formatKeyValue(barangMap)}`,
+      `Jumlah kemasan : ${formatKeyValue(kemasanMap)}`,
+      `${tanggalLabel} : ${masukTxt}`,
+    ].join("\n");
+  }
+
+  // ==================================================
+  // FORMAT KHUSUS BC 2.7 KELUAR
+  // ==================================================
+  if (bc === "BC 2.7" && arah === "Keluar") {
+    const pengirim = [
+      ...new Set(dataArr.map((d) => d.pengirim).filter(Boolean)),
+    ].join(" | ");
+
     const jalurOrder = { HIJAU: 1, MERAH: 2, KUNING: 3 };
-    const sortedKeys = Object.keys(bcGrouped).sort((a, b) => {
-      const jalurA = a.split("|")[0].trim().toUpperCase();
-      const jalurB = b.split("|")[0].trim().toUpperCase();
-      return (jalurOrder[jalurA] || 99) - (jalurOrder[jalurB] || 99);
-    });
 
-    const bcLines = sortedKeys
-      .map((key) => `BC 2.7 (${key}) : ${bcGrouped[key].join(", ")}`)
-      .join("\n");
+    const sortedKeys = Object.keys(bcGrouped).sort((a, b) => {
+      const ja = a.split("|")[0].trim().toUpperCase();
+      const jb = b.split("|")[0].trim().toUpperCase();
+      return (jalurOrder[ja] || 99) - (jalurOrder[jb] || 99);
+    });
 
     return [
       `*BC 2.7 Keluar*`,
       `Customer : ${pengirim}`,
-      bcLines,
-      `No. Segel : ${segelList.join(", ") || ""}`,
-      `Jumlah Dokumen : ${totalDokumen} Dokumen`,
+      ...sortedKeys.map((k) => `BC 2.7 (${k}) : ${bcGrouped[k].join(", ")}`),
+      `No. Segel : ${segelList.join(", ")}`,
+      `Jumlah Dokumen : ${dataArr.length} Dokumen`,
       `Jenis Barang : ${jenisBarang}`,
       `Jumlah Barang : ${formatKeyValue(barangMap)}`,
       `Kemasan : ${formatKeyValue(kemasanMap)}`,
-      `${labelTanggal} : ${masukTxt}`,
+      `Tanggal Keluar : ${masukTxt}`,
     ].join("\n");
   }
 
-  // ================================
+  // ==================================================
   // FORMAT KHUSUS BC 2.7 MASUK
-  // ================================
-  const labelTanggal = "Tanggal Masuk";
-  const totalDocs = dataArr.length;
+  // ==================================================
+  const pengirim = [
+    ...new Set(dataArr.map((d) => d.pengirim).filter(Boolean)),
+  ].join(" | ");
 
   return [
-    `*BC 2.7 ${jenisBC}*`,
+    `*BC 2.7 Masuk*`,
     `Supplier : ${pengirim}`,
     ...Object.entries(bcList).map(
-      ([j, l]) => `No BC 2.7 ( ${j} ) : ${l.join(", ")}`
+      ([j, l]) => `No BC 2.7 (${j}) : ${l.join(", ")}`
     ),
     `No Segel : ${segelList.join(", ")}`,
-    `Jumlah Dokumen : ${totalDocs} Dokumen`,
+    `Jumlah Dokumen : ${dataArr.length} Dokumen`,
     `Jenis Barang : ${jenisBarang}`,
     `Jumlah barang : ${formatKeyValue(barangMap)}`,
     `Jumlah kemasan : ${formatKeyValue(kemasanMap)}`,
     `Tanggal Dokumen : ${formatTanggalDokumen(tanggalArr)}`,
-    `${labelTanggal} : ${masukTxt}`,
+    `Tanggal Masuk : ${masukTxt}`,
   ].join("\n");
 }
 
@@ -416,9 +459,7 @@ $("processBtn").addEventListener("click", async () => {
 
   try {
     const workbooks = await Promise.all(selectedFiles.map(readWorkbook));
-    const extracted = workbooks.map(({ file, wb }) =>
-      extractDataFromWorkbook(file, wb)
-    );
+    const extracted = workbooks.map(({ wb }) => extractDataFromWorkbook(wb));
     renderPreview(extracted);
     $("result").value = generateResultText(extracted);
   } finally {

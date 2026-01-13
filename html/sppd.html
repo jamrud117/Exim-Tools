@@ -27,102 +27,108 @@
     </nav>
 
     <main class="main-content">
-      <div class="container py-4">
-        <h1 class="text-center mb-4 fw-bold text-navy">
-          Sistem Pengecekan Draft Dokumen BC 2.7
-        </h1>
+      <div class="container-fluid py-4 d-flex justify-content-center">
+        <div style="max-width: 1400px; width: 100%">
+          <h1 class="text-center mb-4 fw-bold text-navy">
+            Draft Dokumen BC 2.7 Checker
+          </h1>
 
-        <div class="card p-4 mb-5 shadow-lg">
-          <!-- Upload -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold"
-              >Upload 3 File Excel (Draft, INV, PL)</label
-            >
-            <input type="file" id="files" class="form-control" multiple />
-          </div>
-
-          <div class="row mb-3">
-            <div class="col-md">
-              <label class="form-label fw-semibold">Nama Perusahaan</label>
-              <select id="ptSelect" class="form-select"></select>
-            </div>
-          </div>
-          <!-- Kurs, Valuta, jenis transaksi -->
-          <div class="row">
-            <div class="col-md mb-3">
-              <label class="form-label fw-semibold">Kurs</label>
-              <input
-                type="text"
-                id="kurs"
-                class="form-control"
-                placeholder="Kurs BC"
-                disabled
-              />
-            </div>
-            <div class="col-md mb-3">
-              <label class="form-label fw-semibold">Valuta</label>
-              <select id="valutaSelect" class="form-select">
-                <option value="USD" selected>USD</option>
-                <option value="IDR">IDR</option>
-              </select>
-            </div>
-            <div class="col-md mb-3">
-              <label class="form-label fw-semibold">Jenis Transaksi</label>
-              <select id="jenisTrx" class="form-select">
-                <option value="PENYERAHAN BKP" selected>
-                  1 - PENYERAHAN BKP
-                </option>
-                <option value="PENYERAHAN JKP">2 - PENYERAHAN JKP</option>
-                <option value="RETUR">3 - RETUR</option>
-                <option value="NON PENYERAHAN">4 - NON PENYERAHAN</option>
-                <option value="LAINNYA">5 - LAINNYA</option>
-              </select>
-            </div>
-            <div class="col-md mb-3">
-              <label class="form-label fw-semibold">Filter Hasil</label>
-              <select id="filter" class="form-select">
-                <option value="all">Semua</option>
-                <option value="sama">Sama</option>
-                <option value="beda">Beda</option>
-              </select>
-            </div>
-            <div class="col-md-12 mb-3" id="exBCWrapper" style="display: none">
-              <label for="exBC" class="form-label fw-semibold"
-                >Tambahkan Ex BC</label
+          <div class="card p-4 mb-5 shadow-lg">
+            <!-- Upload -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold"
+                >Upload 3 File Excel (Draft, INV, PL)</label
               >
-              <textarea
-                class="form-control"
-                name="exBC"
-                id="exBC"
-                rows="3"
-              ></textarea>
+              <input type="file" id="files" class="form-control" multiple />
             </div>
+
+            <div class="row mb-3">
+              <div class="col-md">
+                <label class="form-label fw-semibold">Nama Perusahaan</label>
+                <select id="ptSelect" class="form-select"></select>
+              </div>
+            </div>
+            <!-- Kurs, Valuta, jenis transaksi -->
+            <div class="row">
+              <div class="col-md mb-3">
+                <label class="form-label fw-semibold">Kurs</label>
+                <input
+                  type="text"
+                  id="kurs"
+                  class="form-control"
+                  placeholder="Kurs BC"
+                  disabled
+                />
+              </div>
+              <div class="col-md mb-3">
+                <label class="form-label fw-semibold">Valuta</label>
+                <select id="valutaSelect" class="form-select">
+                  <option value="USD" selected>USD</option>
+                  <option value="IDR">IDR</option>
+                </select>
+              </div>
+              <div class="col-md mb-3">
+                <label class="form-label fw-semibold">Jenis Transaksi</label>
+                <select id="jenisTrx" class="form-select">
+                  <option value="PENYERAHAN BKP" selected>
+                    1 - PENYERAHAN BKP
+                  </option>
+                  <option value="PENYERAHAN JKP">2 - PENYERAHAN JKP</option>
+                  <option value="RETUR">3 - RETUR</option>
+                  <option value="NON PENYERAHAN">4 - NON PENYERAHAN</option>
+                  <option value="LAINNYA">5 - LAINNYA</option>
+                </select>
+              </div>
+              <div class="col-md mb-3">
+                <label class="form-label fw-semibold">Filter Hasil</label>
+                <select id="filter" class="form-select">
+                  <option value="all">Semua</option>
+                  <option value="sama">Sama</option>
+                  <option value="beda">Beda</option>
+                </select>
+              </div>
+              <div
+                class="col-md-12 mb-3"
+                id="exBCWrapper"
+                style="display: none"
+              >
+                <label for="exBC" class="form-label fw-semibold"
+                  >Tambahkan Ex BC</label
+                >
+                <textarea
+                  class="form-control"
+                  name="exBC"
+                  id="exBC"
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <button id="btnCheck" class="btn btn-navy fw-bold w-100">
+              Cross Check
+            </button>
           </div>
 
-          <!-- Button -->
-          <button id="btnCheck" class="btn btn-navy fw-bold w-100">
-            Cross Check
-          </button>
-        </div>
-
-        <!-- Hasil -->
-        <h2 class="fw-bold mb-3 text-navy">Hasil Pengecekan</h2>
-        <div class="card shadow-lg">
-          <div class="card-body p-0">
-            <table
-              class="table table-bordered table-hover mb-0"
-              id="resultTable"
-            >
-              <thead>
-                <tr>
-                  <th>PEMERIKSAAN</th>
-                  <th>DRAFT EXIM</th>
-                  <th>DATA INV & PL</th>
-                  <th>HASIL</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+          <!-- Hasil -->
+          <h2 class="fw-bold mb-3 text-navy text-center">Hasil Pengecekan</h2>
+          <div class="card shadow-lg">
+            <div class="card-body p-0">
+              <table
+                class="table table-bordered table-hover mb-0"
+                id="resultTable"
+              >
+                <thead>
+                  <tr>
+                    <th>PEMERIKSAAN</th>
+                    <th>DRAFT EXIM</th>
+                    <th>DATA INV & PL</th>
+                    <th>HASIL</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

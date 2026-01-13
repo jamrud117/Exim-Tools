@@ -992,18 +992,21 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       header.dataset.bound = "1";
 
       header.addEventListener("click", () => {
+        header.classList.toggle("open");
+
         let next = header.nextElementSibling;
 
         while (
           next &&
           !stopClasses.some((cls) => next.classList.contains(cls))
         ) {
-          next.style.display = next.style.display === "none" ? "" : "none";
+          next.classList.toggle("row-collapsed");
           next = next.nextElementSibling;
         }
       });
     });
   }
+
   bindCollapsible(".exbc-header", [
     "exbc-header",
     "general-header",

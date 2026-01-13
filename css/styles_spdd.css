@@ -1,19 +1,18 @@
+/* ===============================
+   RESULT TABLE STATUS
+=============================== */
 #resultTable tbody tr.match td {
   background-color: #d4edda !important;
 }
 #resultTable tbody tr.mismatch td {
   background-color: #f8d7da !important;
 }
-#resultTable tbody tr.barang-header td {
-  background-color: #1b2a49 !important;
-  color: #fff !important;
-}
 
-/* Table styling */
-/* Paksa override bootstrap */
-#resultTable thead tr {
-  background-color: #1b2a49 !important;
-}
+/* ===============================
+   RESULT TABLE HEADER
+=============================== */
+#resultTable thead,
+#resultTable thead tr,
 #resultTable thead th {
   background-color: #1b2a49 !important;
   color: #fff !important;
@@ -26,13 +25,92 @@
 }
 
 #resultTable tbody tr:hover {
-  background-color: #f1f4fb; /* biru muda */
+  background-color: #f1f4fb;
 }
+
+/* ===============================
+   SECTION HEADERS (EXBC / GENERAL / BARANG)
+=============================== */
+.exbc-header td,
+.general-header td,
+.barang-header td {
+  background-color: #1b2a49 !important;
+  color: #fff !important;
+}
+
+.exbc-header,
+.general-header,
+.barang-header {
+  cursor: pointer;
+}
+
+.exbc-header:hover,
+.general-header:hover,
+.barang-header:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Arrow icon */
+.exbc-header td:first-child::before,
+.general-header td:first-child::before,
+.barang-header td:first-child::before {
+  content: "▸";
+  display: inline-block;
+  font-weight: bold;
+  margin-right: 6px;
+  transition: transform 0.2s ease;
+}
+
+.exbc-header.open td:first-child::before,
+.general-header.open td:first-child::before,
+.barang-header.open td:first-child::before {
+  transform: rotate(90deg);
+}
+
+/* ===============================
+   COLLAPSIBLE ANIMATION
+=============================== */
+tbody tr {
+  overflow: hidden;
+}
+
+tbody tr td {
+  transition: all 0.25s ease;
+}
+
+tbody tr.row-collapsed {
+  height: 0 !important;
+  min-height: 0 !important;
+}
+
+tbody tr.row-collapsed td {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 0 !important;
+  opacity: 0;
+  border: 0 !important;
+}
+
+/* ===============================
+   ZEBRA STRIPING (DATA ROWS ONLY)
+=============================== */
+#resultTable
+  tbody
+  tr:not(.exbc-header):not(.general-header):not(.barang-header):nth-child(
+    even
+  ) {
+  background: #eef2f9;
+}
+
+/* ===============================
+   PAGE BASE
+=============================== */
 html,
 body {
   min-height: 100%;
   margin: 0;
 }
+
 html {
   overflow-y: scroll;
 }
@@ -45,13 +123,18 @@ body {
   background-color: #f4f6f9;
   color: #333;
 }
+
 body.swal2-shown {
   padding-right: 0 !important;
 }
+
 .main-content {
   flex: 1;
 }
-/* Warna khusus */
+
+/* ===============================
+   BUTTON & COLOR
+=============================== */
 .text-navy {
   color: #1b2a49;
 }
@@ -67,24 +150,21 @@ body.swal2-shown {
   color: #fff;
 }
 
+/* ===============================
+   CARD
+=============================== */
 .card {
   border-radius: 15px;
   border: none;
 }
 
-/* Table styling */
-#resultTable thead {
-  background: #1b2a49;
-  color: white;
-}
-#resultTable tbody tr:nth-child(even) {
-  background: #eef2f9;
-}
-/* 🌐 Navbar (Standardized) */
+/* ===============================
+   NAVBAR
+=============================== */
 .main-nav {
   background: #1b2a49;
   color: #fff;
-  padding: 16px 0; /* diseragamkan tinggi 16px atas bawah */
+  padding: 16px 0;
   position: sticky;
   top: 0;
   z-index: 999;
@@ -92,7 +172,7 @@ body.swal2-shown {
 }
 
 .nav-container {
-  width: 100%; /* konsisten dengan layout rata tengah */
+  width: 100%;
   padding: 0 24px;
   display: flex;
   justify-content: space-between;
@@ -121,17 +201,19 @@ body.swal2-shown {
   transition: color 0.3s ease;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links a.active {
   color: #ffd54f;
 }
 
 .nav-links a.active {
-  color: #ffd54f;
   font-weight: 600;
   border-bottom: 2px solid #ffd54f;
 }
 
-/* 🌙 Footer Style */
+/* ===============================
+   FOOTER
+=============================== */
 .main-footer {
   background: #1b2a49;
   color: #ccc;
@@ -139,24 +221,17 @@ body.swal2-shown {
   padding: 14px 0;
   margin-top: auto;
   font-size: 14px;
-  letter-spacing: 0.3px;
 }
 
-.main-footer p {
-  margin: 0;
-}
-
-.prim-bg td {
-  background-color: #1b2a49;
-  color: #fff;
-}
-
-/* Responsive Navbar */
+/* ===============================
+   RESPONSIVE
+=============================== */
 @media (max-width: 700px) {
   .nav-container {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .nav-links {
     flex-direction: column;
     width: 100%;

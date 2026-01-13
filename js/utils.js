@@ -163,8 +163,7 @@ function hitungKemasanNWGW(sheet) {
   let colKemasan = null,
     colGW = null,
     colNW = null,
-    headerRow = null,
-    kemasanUnit = "";
+    headerRow = null;
 
   // cari kolom & headerRow
   for (let r = range.s.r; r <= range.e.r; r++) {
@@ -183,40 +182,31 @@ function hitungKemasanNWGW(sheet) {
     }
   }
 
-  function extractUnit(text) {
-    if (!text) return "";
-    const s = String(text).trim();
-    const m = s.match(/KEMASAN\s*(.*)/i);
+  // ==================== AMBIL UNIT KEMASAN ====================
+  function detectKemasanUnit(sheet, colKemasan, headerRow, range) {
+    // 1️⃣ Dari header: KEMASAN CT
+    let headerText = getCellValueRC(sheet, headerRow, colKemasan);
+    let m = String(headerText || "").match(/KEMASAN\s*(.*)/i);
     if (m && m[1] && m[1].trim()) return m[1].trim().toUpperCase();
-    const matches = s.match(/[A-Za-z()\/\-\s]{2,}/g);
-    if (!matches) return "";
-    let candidate = matches[matches.length - 1].trim();
-    candidate = candidate.replace(/^QTY\s*/i, "");
-    candidate = candidate.replace(/^\(/, "").replace(/\)$/, "");
-    return candidate.toUpperCase();
+
+    // 2️⃣ Dari baris setelah header
+    for (let r = headerRow + 1; r <= range.e.r; r++) {
+      const v = getCellValueRC(sheet, r, colKemasan);
+      if (v && isNaN(v)) return String(v).trim().toUpperCase();
+    }
+
+    // 3️⃣ Dari BARIS TERAKHIR
+    for (let r = range.e.r; r >= range.s.r; r--) {
+      const v = getCellValueRC(sheet, r, colKemasan);
+      if (v && isNaN(v)) return String(v).trim().toUpperCase();
+    }
+
+    return "";
   }
 
+  let kemasanUnit = "";
   if (colKemasan !== null && headerRow !== null) {
-    const headerCell = getCellValueRC(sheet, headerRow, colKemasan);
-    kemasanUnit = extractUnit(headerCell);
-    if (!kemasanUnit) {
-      const below =
-        headerRow + 1 <= range.e.r
-          ? getCellValueRC(sheet, headerRow + 1, colKemasan)
-          : "";
-      if (below && typeof below === "string" && !/\d/.test(String(below))) {
-        kemasanUnit = extractUnit(below);
-      }
-    }
-    if (!kemasanUnit) {
-      const above =
-        headerRow - 1 >= range.s.r
-          ? getCellValueRC(sheet, headerRow - 1, colKemasan)
-          : "";
-      if (above && typeof above === "string" && !/\d/.test(String(above))) {
-        kemasanUnit = extractUnit(above);
-      }
-    }
+    kemasanUnit = detectKemasanUnit(sheet, colKemasan, headerRow, range);
   }
 
   // cari dataStartRow
@@ -261,6 +251,95 @@ function hitungKemasanNWGW(sheet) {
     kemasanUnit: kemasanUnit,
   };
 }
+
+function normalizeQtyUnit(u) {
+  if (!u) return "";
+
+  const v = String(u).trim().toUpperCase();
+
+  // PAIRS family → NPR
+  if (v === "PAIRS" || v === "PAIR" || v === "PRS" || v === "PR") return "NPR";
+
+  // PCS family → PCE
+  if (v === "PCS" || v === "PIECE" || v === "PC" || v === "PCE") return "PCE";
+
+  return v;
+}
+
+function getPLUnits(sheetPL) {
+  const range = XLSX.utils.decode_range(sheetPL["!ref"]);
+
+  let colQty = null;
+  let colUnit = null;
+  let headerRow = null;
+  let globalUnit = "";
+
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const raw = getCellValueRC(sheetPL, r, c);
+      if (!raw) continue;
+
+      const v = String(raw).toUpperCase();
+
+      // Cari QTY
+      if (v.includes("QTY")) {
+        colQty = c;
+
+        // 🔥 Ambil unit dari header: TOTAL QTY (PAIRS)
+        const m = v.match(/\(([^)]+)\)/);
+        if (m) globalUnit = m[1].trim().toUpperCase();
+      }
+
+      // Cari kolom UNIT terpisah (kalau ada)
+      if (v.includes("SATUAN") || v.includes("UNIT")) {
+        colUnit = c;
+      }
+    }
+
+    if (colQty !== null) {
+      headerRow = r;
+      break;
+    }
+  }
+
+  if (colQty === null) return { type: "UNKNOWN", data: [] };
+
+  let items = [];
+  let unitSet = new Set();
+
+  for (let r = headerRow + 1; r <= range.e.r; r++) {
+    const qty = getCellValueRC(sheetPL, r, colQty);
+    if (!qty || isNaN(qty)) continue;
+
+    let unit = "";
+
+    // 1️⃣ Kalau ada kolom UNIT → pakai itu
+    if (colUnit !== null) {
+      unit = getCellValueRC(sheetPL, r, colUnit);
+    }
+
+    // 2️⃣ Kalau tidak ada → pakai global unit dari header
+    if (!unit && globalUnit) {
+      unit = globalUnit;
+    }
+
+    const normUnit = normalizeQtyUnit(unit);
+
+    if (normUnit) unitSet.add(normUnit);
+
+    items.push({
+      qty: Number(qty),
+      unit: normUnit || null,
+    });
+  }
+
+  if (unitSet.size > 1) return { type: "PER_ITEM", data: items };
+  if (unitSet.size === 1)
+    return { type: "GLOBAL", unit: [...unitSet][0], data: items };
+
+  return { type: "UNKNOWN", data: items };
+}
+
 // === Ekstraksi data kontrak dari file PL ===
 function extractKontrakInfoFromPL(sheetPL) {
   const range = XLSX.utils.decode_range(sheetPL["!ref"]);

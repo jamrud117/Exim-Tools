@@ -239,6 +239,9 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
   const { kemasanSum, bruttoSum, nettoSum, kemasanUnit } =
     hitungKemasanNWGW(sheetPL);
 
+  // === DETEKSI SATUAN QTY DARI PL (GLOBAL / PER ITEM)
+  const plUnits = getPLUnits(sheetPL);
+
   // ---------- Data INV ----------
   const rangeINV = sheetINV?.["!ref"]
     ? XLSX.utils.decode_range(sheetINV["!ref"])
@@ -873,37 +876,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     kontrakTglFormatted,
     isEqual(draftContractDate, kontrakTglFormatted)
   );
-  const detectUnitFromPL = (sheet) => {
-    const range = XLSX.utils.decode_range(sheet["!ref"]);
-    let foundPair = false;
-    let foundPiece = false;
 
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cell = sheet[XLSX.utils.encode_cell({ r: R, c: C })];
-        if (!cell || typeof cell.v !== "string") continue;
-        const v = cell.v.trim().toUpperCase();
-        if (
-          v === "PAIRS" ||
-          v === "PRS" ||
-          v === "NPR" ||
-          v.includes("PAIRS")
-        ) {
-          foundPair = true;
-        }
-
-        if (v === "PCS" || v === "PCE" || v === "PIECE") {
-          foundPiece = true;
-        }
-      }
-    }
-
-    if (foundPair) return "NPR";
-    if (foundPiece) return "PCE";
-    return "NPR";
-  };
-
-  const detectedUnit = detectUnitFromPL(sheetPL);
   const rangeBarang = XLSX.utils.decode_range(sheetsDATA.BARANG["!ref"]);
   const plCols = findHeaderColumns(sheetPL, { nw: "NW", gw: "GW" });
 
@@ -951,17 +924,29 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
           XLSX.utils.encode_cell({ r: rowINV, c: invCols.qty })
         )
       : "";
-    const draftUnit = getCellValue(sheetsDATA.BARANG, "J2") || detectedUnit;
+    // ===== UNIT PER BARANG dari PL =====
+    const plUnit =
+      plUnits.type === "PER_ITEM"
+        ? plUnits.data[barangCounter - 1]?.unit
+        : plUnits.unit;
+
+    // Unit Draft EXIM
+    const draftUnit = getCellValue(sheetsDATA.BARANG, "J" + (r + 1));
+
+    // Default fallback jika draft kosong
+    const effectiveDraftUnit = draftUnit || plUnit;
+
     const qtyMatch = isEqual(draftQty, invQty);
-    const unitMatch = draftUnit === detectedUnit;
+    const unitMatch = String(effectiveDraftUnit) === String(plUnit);
+
     addResult(
       "Quantity",
       draftQty,
       invQty,
       qtyMatch && unitMatch,
       true,
-      detectedUnit,
-      draftUnit
+      plUnit,
+      effectiveDraftUnit
     );
 
     const draftNW = getCellValue(sheetsDATA.BARANG, "T" + (r + 1));

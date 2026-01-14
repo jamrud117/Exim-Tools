@@ -38,5 +38,15 @@
     "cif": "AMOUNT",
     "suratjalan": "SURAT JALAN",
     "npwp": "0433722683501000000000"
+  },
+  "PT. CHINLI PLASTIC TECHNOLOGY INDONESIA": {
+    "check": "PT. CHINLI PLASTIC TECHNOLOGY INDONESIA",
+    "address": "JL.MILLENIUM RAYA BLOK L 3,NO.A1,KAWASAN MILLENIUM,KEL.PEUSAR,KEC.PANONGAN,KAB.TANGERANG,BANTEN",
+    "kode": "MATERIAL CODE CUSTOMER",
+    "uraian": "ITEM NAME",
+    "qty": "QTY",
+    "cif": "AMOUNT",
+    "suratjalan": "SURAT JALAN",
+    "npwp": "0763045507452000000000"
   }
 }

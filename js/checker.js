@@ -258,6 +258,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     qty: config.qty,
     cif: config.cif,
     suratjalan: config.suratjalan,
+    no: config.no,
   });
 
   const findInvoiceNo = (sheet) => {
@@ -295,14 +296,28 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
 
   // Hitung CIF
   let cifSum = 0;
+
   if (invCols.headerRow !== null && invCols.cif !== undefined) {
     for (let r = invCols.headerRow + 1; r <= rangeINV.e.r; r++) {
-      const nomorSeri = getCellValue(sheetINV, "A" + (r + 1));
-      if (!nomorSeri || isNaN(nomorSeri)) continue;
-      const val = getCellValueRC(sheetINV, r, invCols.cif);
-      cifSum += parseFloat(val) || 0;
+      const qty = getCellValueRC(sheetINV, r, invCols.qty);
+      const item = getCellValueRC(sheetINV, r, invCols.uraian);
+
+      // STOP jika bukan baris item
+      if (
+        !qty ||
+        isNaN(qty) ||
+        !item ||
+        String(item).toUpperCase().includes("TOTAL")
+      ) {
+        break;
+      }
+
+      const cif = getCellValueRC(sheetINV, r, invCols.cif);
+      cifSum += parseFloat(cif) || 0;
     }
   }
+
+  console.log("🔥 CIF SUM =", cifSum);
 
   // Jenis Trx
   let jenisTransaksi = "";

@@ -132,25 +132,34 @@ function detectFileType(workbook) {
 // Cari kolom berdasarkan header (tidak diubah)
 function findHeaderColumns(sheet, headers) {
   const range = XLSX.utils.decode_range(sheet["!ref"]);
-  let found = {},
-    headerRow = null;
+  let found = {};
+  let headerRow = null;
+
   for (let r = range.s.r; r <= range.e.r; r++) {
     for (let c = range.s.c; c <= range.e.c; c++) {
       const cell = sheet[XLSX.utils.encode_cell({ r, c })];
-      if (cell && typeof cell.v === "string") {
-        const val = cell.v.toString().trim().toUpperCase();
-        for (const key in headers) {
-          if (val.includes(headers[key].toUpperCase())) {
-            found[key] = c;
-          }
+      if (!cell || typeof cell.v !== "string") continue;
+
+      const val = cell.v.toString().trim().toUpperCase();
+
+      for (const key in headers) {
+        const target = headers[key];
+
+        // 🔥 JIKA HEADER MAPPING KOSONG → SKIP
+        if (!target) continue;
+
+        if (val.includes(String(target).toUpperCase())) {
+          found[key] = c;
         }
       }
     }
+
     if (Object.keys(found).length > 0) {
       headerRow = r;
       break;
     }
   }
+
   return { ...found, headerRow };
 }
 

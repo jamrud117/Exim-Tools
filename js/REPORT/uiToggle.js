@@ -16,8 +16,15 @@ function toggleStatusJalur() {
   // HELPER GRID
   // ===============================
   function setCol(el, col) {
-    el.classList.remove("col-md-4", "col-md-6", "col-md-12");
-    el.classList.add(`col-md-${col}`);
+    const classes = ["col-12", "col-xl-4", "col-xl-6", "col-xl-12"];
+
+    el.classList.remove(...classes);
+
+    // HP / tablet / split → selalu full
+    el.classList.add("col-12");
+
+    // Hanya layar besar yang berubah
+    el.classList.add(`col-xl-${col}`);
   }
 
   // ===============================

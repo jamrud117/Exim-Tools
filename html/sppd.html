@@ -43,11 +43,11 @@
             </div>
             <!-- Kurs, Valuta, jenis transaksi -->
             <div class="row">
-              <div class="col-12 col-lg-7 mb-3">
+              <div class="col-12 col-lg-6 mb-3">
                 <label class="form-label fw-semibold">Nama Perusahaan</label>
                 <select id="ptSelect" class="form-select"></select>
               </div>
-              <div class="col-12 col-md-4 col-lg-1 mb-3">
+              <div class="col-12 col-md-3 col-lg-2 mb-3">
                 <label class="form-label fw-semibold">Valuta</label>
                 <select id="valutaSelect" class="form-select">
                   <option value="USD" selected>USD</option>
@@ -66,7 +66,7 @@
                   <option value="LAINNYA">5 - LAINNYA</option>
                 </select>
               </div>
-              <div class="col-12 col-md-4 col-lg-2 mb-3">
+              <div class="col-12 col-md-3 col-lg-2 mb-3">
                 <label class="form-label fw-semibold">Filter Hasil</label>
                 <select id="filter" class="form-select">
                   <option value="all">Semua</option>
@@ -74,9 +74,7 @@
                   <option value="beda">Beda</option>
                 </select>
               </div>
-            </div>
-            <div class="row">
-              <div class="col mb-3">
+              <div class="col-2 col-md-2 mb-3">
                 <label class="form-label fw-semibold">Kurs</label>
                 <input
                   style="width: 100px"
@@ -87,6 +85,8 @@
                   disabled
                 />
               </div>
+            </div>
+            <div class="row">
               <div class="col mb-3" id="exBCWrapper" style="display: none">
                 <label for="exBC" class="form-label fw-semibold"
                   >Tambahkan Ex BC</label

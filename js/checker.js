@@ -189,8 +189,66 @@ function formatRupiah(value) {
   return `Rp. ${formatted}`;
 }
 
+async function getKursFromSpreadsheet(valuta) {
+  // ✅ IDR selalu 1
+  if (String(valuta).toUpperCase() === "IDR") {
+    return 1;
+  }
+
+  const SHEET_ID = "1z0BMzWLQbKvhcDOSX3ZZeQ8e5g3wk9wHEHIxpIfuoi4";
+  const SHEET_NAME = "KURS";
+
+  const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      throw new Error("Sheet KURS kosong");
+    }
+
+    // 🔍 Cari baris sesuai valuta (USD, EUR, dll)
+    const row = rows.find((r) =>
+      String(r["Mata Uang"] || "")
+        .toUpperCase()
+        .includes(`(${valuta.toUpperCase()})`),
+    );
+
+    if (!row) {
+      throw new Error(`Valuta ${valuta} tidak ditemukan di sheet KURS`);
+    }
+
+    const kursRaw = row["Nilai"];
+    if (!kursRaw) {
+      throw new Error(`Kolom Nilai kosong untuk ${valuta}`);
+    }
+
+    // Format Indonesia → number
+    const kurs = Number(String(kursRaw).replace(/\./g, "").replace(",", "."));
+    if (isNaN(kurs)) {
+      throw new Error(`Nilai kurs tidak valid: ${kursRaw}`);
+    }
+
+    return kurs;
+  } catch (err) {
+    console.error("❌ Gagal ambil kurs spreadsheet:", err);
+    return null;
+  }
+}
+
 // ---------- Fungsi Utama ----------
-function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
+async function checkAll(
+  sheetPL,
+  sheetINV,
+  sheetsDATA,
+  kurs,
+  kontrakNo,
+  kontrakTgl,
+) {
   const missing = [];
 
   if (!sheetPL || !sheetPL["!ref"]) missing.push("PL");
@@ -214,22 +272,6 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     return;
   }
   document.querySelector("#resultTable tbody").innerHTML = "";
-
-  // === AMBIL KURS DARI DATA.HEADER ===
-  const kursCell = getCellValue(sheetsDATA.HEADER, "BW2");
-
-  const kursParsed = parseKurs(kursCell);
-
-  if (!kursParsed || isNaN(kursParsed)) {
-    console.error("❌ Kurs tidak valid:", kursCell);
-
-    Swal.fire({
-      icon: "error",
-      title: "Kurs tidak ditemukan",
-      html: `Nilai kurs di file DATA tidak valid:<br><b>${kursCell}</b>`,
-    });
-    return;
-  }
 
   // Helper umum
   const normalize = (v) => {
@@ -428,7 +470,24 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
   addResult("NPWP", npwpDraft, npwpRef, npwpMatch);
 
   // Harga Penyerahan & Valuta
-  const valuta = (getCellValue(sheetsDATA.HEADER, "CI2") || "").toUpperCase();
+  const valuta = (
+    getCellValue(sheetsDATA.HEADER, "CI2") || "USD"
+  ).toUpperCase();
+
+  const kursParsed = await getKursFromSpreadsheet(valuta);
+
+  if (!kursParsed) {
+    Swal.fire({
+      icon: "error",
+      title: "Kurs tidak tersedia",
+      text: `Gagal mengambil kurs ${valuta}`,
+    });
+    return;
+  }
+
+  document.getElementById("kurs").value =
+    kursParsed === 1 ? "1" : kursParsed.toLocaleString("id-ID");
+
   const selectedValuta = (
     document.getElementById("valutaSelect")?.value || "USD"
   ).toUpperCase();

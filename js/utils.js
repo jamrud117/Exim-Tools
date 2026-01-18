@@ -384,7 +384,7 @@ function extractKontrakInfoFromPL(sheetPL) {
             let raw = m[1].trim();
 
             const dmatch = raw.match(
-              /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/
+              /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/,
             );
             if (dmatch) {
               const [_, d, mo, y] = dmatch;
@@ -407,13 +407,13 @@ function extractKontrakInfoFromPL(sheetPL) {
       if (/No\.?\s*Kontrak/i.test(val) && /Tanggal\s*Kontrak/i.test(val)) {
         // Ambil No Kontrak
         const mNo = val.match(
-          /No\.?\s*Kontrak\s*[:\-]?\s*([^:]+?)(?=Tanggal\s*Kontrak|$)/i
+          /No\.?\s*Kontrak\s*[:\-]?\s*([^:]+?)(?=Tanggal\s*Kontrak|$)/i,
         );
         if (mNo) kontrakNo = mNo[1].trim();
 
         // Ambil Tanggal Kontrak
         const mTgl = val.match(
-          /Tanggal\s*Kontrak\s*[:\-]?\s*([A-Za-z0-9\/\-\s]+)/i
+          /Tanggal\s*Kontrak\s*[:\-]?\s*([A-Za-z0-9\/\-\s]+)/i,
         );
         if (mTgl) {
           let raw = mTgl[1].trim();
@@ -567,4 +567,28 @@ function getCustomerDraft(sheetsDATA) {
   }
 
   return "";
+}
+
+function diffText(a, b, refSide = false) {
+  a = String(a ?? "");
+  b = String(b ?? "");
+
+  if (a === b) return a;
+
+  const max = Math.max(a.length, b.length);
+  let result = "";
+
+  for (let i = 0; i < max; i++) {
+    const ca = a[i] || "";
+    const cb = b[i] || "";
+
+    if (ca !== cb) {
+      result += refSide
+        ? `<span class="diff-ref">${cb || "∅"}</span>`
+        : `<span class="diff">${ca || "∅"}</span>`;
+    } else {
+      result += ca;
+    }
+  }
+  return result;
 }

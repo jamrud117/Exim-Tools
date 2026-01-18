@@ -28,7 +28,7 @@ function parseExBC(text) {
 
   for (const line of lines) {
     const match = line.match(
-      /^(\d+)\s*=\s*([0-9,\s]+)(?:\s*\(([^)]+)\)|\s+(.+))$/
+      /^(\d+)\s*=\s*([0-9,\s]+)(?:\s*\(([^)]+)\)|\s+(.+))$/,
     );
 
     if (!match) continue;
@@ -117,34 +117,46 @@ function addResult(
   isQty = false,
   unitForRef = "",
   unitForData = undefined,
-  group = "general"
+  group = "general",
 ) {
-  // --- KHUSUS NPWP: tampilkan RAW, jangan formatValue ---
-  if (["NPWP", "NOMOR DAFTAR"].includes(String(check).toUpperCase())) {
-    const tbody = document.querySelector("#resultTable tbody");
-    const row = document.createElement("tr");
+  const tbody = document.querySelector("#resultTable tbody");
+  const row = document.createElement("tr");
 
+  // ================= NPWP & NOMOR DAFTAR (RAW) =================
+  if (["NPWP", "NOMOR DAFTAR"].includes(String(check).toUpperCase())) {
     row.innerHTML = `
       <td>${check}</td>
       <td>${value ?? ""}</td>
       <td>${ref ?? ""}</td>
       <td>${isMatch ? "Sama" : "Beda"}</td>
     `;
-
     row.classList.add(isMatch ? "match" : "mismatch", group);
     tbody.appendChild(row);
     return;
   }
 
+  // ================= NORMAL =================
   if (unitForData === undefined) unitForData = unitForRef;
-  const tbody = document.querySelector("#resultTable tbody");
-  const row = document.createElement("tr");
+
+  const leftRaw = formatValue(value, isQty, unitForData);
+  const rightRaw = formatValue(ref, isQty, unitForRef);
+
+  let leftHTML = leftRaw;
+  let rightHTML = rightRaw;
+
+  // 🔥 HIGHLIGHT JIKA BEDA
+  if (!isMatch) {
+    leftHTML = diffText(leftRaw, rightRaw, false);
+    rightHTML = diffText(leftRaw, rightRaw, true);
+  }
+
   row.innerHTML = `
     <td>${check}</td>
-    <td>${formatValue(value, isQty, unitForData)}</td>
-    <td>${formatValue(ref, isQty, unitForRef)}</td>
+    <td>${leftHTML}</td>
+    <td>${rightHTML}</td>
     <td>${isMatch ? "Sama" : "Beda"}</td>
   `;
+
   row.classList.add(isMatch ? "match" : "mismatch", group);
   tbody.appendChild(row);
 }
@@ -278,7 +290,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
             for (const line of lines) {
               // Cek tiap baris apakah ada keyword
               const foundKey = keywords.find((key) =>
-                line.toUpperCase().includes(key)
+                line.toUpperCase().includes(key),
               );
               if (foundKey) {
                 const parts = line.split(":");
@@ -374,7 +386,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
         false,
         "",
         "",
-        "exbc"
+        "exbc",
       );
 
       addResult(
@@ -385,7 +397,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
         false,
         "",
         "",
-        "exbc"
+        "exbc",
       );
     });
   }
@@ -428,7 +440,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     `${cifDraft} ${valuta}`,
     `${cifSum} ${selectedValuta}`,
     cifMatch,
-    false
+    false,
   );
   document.getElementById("kurs").value = kursParsed.toLocaleString("id-ID");
 
@@ -439,7 +451,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     "Harga Penyerahan",
     formatRupiah(hargaPenyerahan),
     formatRupiah(hargaPenyerahanCalc),
-    isEqual(hargaPenyerahan, hargaPenyerahanCalc)
+    isEqual(hargaPenyerahan, hargaPenyerahanCalc),
   );
 
   // ---------- PPN 11% ----------
@@ -449,7 +461,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     "PPN 11%",
     formatRupiah(dasarPengenaanPajak),
     formatRupiah(ppnCalc),
-    Math.abs((dasarPengenaanPajak || 0) - ppnCalc) < 0.01
+    Math.abs((dasarPengenaanPajak || 0) - ppnCalc) < 0.01,
   );
 
   // ---------- KEMASAN ----------
@@ -476,7 +488,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     `${kemasanQtyData} ${kemasanUnitDataMapped}`,
     `${kemasanSum} ${kemasanUnitMapped}`,
     angkaMatch && unitMatch,
-    true
+    true,
   );
 
   // Total Brutto & Netto
@@ -486,7 +498,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     bruttoSum,
     isEqual(getCellValue(sheetsDATA.HEADER, "CB2"), bruttoSum),
     false,
-    "KG"
+    "KG",
   );
   addResult(
     "Netto",
@@ -494,7 +506,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     nettoSum,
     isEqual(getCellValue(sheetsDATA.HEADER, "CC2"), nettoSum),
     false,
-    "KG"
+    "KG",
   );
 
   // ---------- DOKUMEN ----------
@@ -517,7 +529,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
 
     console.log(
       `🟨 [${label}] teks setelah normalisasi:`,
-      src.substring(0, 400)
+      src.substring(0, 400),
     );
 
     // 2️⃣ Deteksi segmen yang mengandung kata DATE / Invoice Date / Packinglist Date
@@ -541,11 +553,11 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       if (parsed) return parsed;
 
       console.warn(
-        `⚠️ [${label}] segmen DATE ditemukan tapi gagal parse. candidate='${candidate}'`
+        `⚠️ [${label}] segmen DATE ditemukan tapi gagal parse. candidate='${candidate}'`,
       );
     } else {
       console.warn(
-        `⚠️ [${label}] tidak menemukan segmen 'DATE' bertanda dalam teks`
+        `⚠️ [${label}] tidak menemukan segmen 'DATE' bertanda dalam teks`,
       );
     }
 
@@ -561,7 +573,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const gm = src.match(pat);
       if (gm) {
         console.log(
-          `🔁 [${label}] fallback menemukan tanggal global: '${gm[1]}'`
+          `🔁 [${label}] fallback menemukan tanggal global: '${gm[1]}'`,
         );
         const parsed = tryParseDateCandidate(gm[1], label);
         if (parsed) return parsed;
@@ -590,7 +602,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const month = new Date(`${mon} 1, 2000`).getMonth() + 1;
       if (!isNaN(month)) {
         const iso = `${y}-${String(month).padStart(2, "0")}-${String(
-          d
+          d,
         ).padStart(2, "0")}`;
         console.log(`   ✅ parsed (text month) => ${iso}`);
         return iso;
@@ -604,7 +616,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const month = new Date(`${mon} 1, 2000`).getMonth() + 1;
       if (!isNaN(month)) {
         const iso = `${y}-${String(month).padStart(2, "0")}-${String(
-          d
+          d,
         ).padStart(2, "0")}`;
         console.log(`   ✅ parsed (Month-first) => ${iso}`);
         return iso;
@@ -617,7 +629,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const [_, dd, mm, yyyy] = m;
       const iso = `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(
         2,
-        "0"
+        "0",
       )}`;
       console.log(`   ✅ parsed (numeric) => ${iso}`);
       return iso;
@@ -629,7 +641,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const [_, yyyy, mm, dd] = m;
       const iso = `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(
         2,
-        "0"
+        "0",
       )}`;
       console.log(`   ✅ parsed (iso-ish) => ${iso}`);
       return iso;
@@ -695,7 +707,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const range = XLSX.utils.decode_range(sheet["!ref"]);
 
     console.log(
-      `🔎 [${label}] mulai scan seluruh sheet (${range.e.r + 1} baris)`
+      `🔎 [${label}] mulai scan seluruh sheet (${range.e.r + 1} baris)`,
     );
 
     for (let R = range.s.r; R <= range.e.r; R++) {
@@ -738,7 +750,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
 
     // Ambil header
     const headerRow = rows[0].map((h) =>
-      (h || "").toString().trim().toUpperCase()
+      (h || "").toString().trim().toUpperCase(),
     );
 
     // Cari index kolom
@@ -771,25 +783,25 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     "Invoice No.",
     getDocumentNumber(sheetsDATA.DOKUMEN, "380"),
     invInvoiceNo,
-    isEqual(getDocumentNumber(sheetsDATA.DOKUMEN, "380"), invInvoiceNo)
+    isEqual(getDocumentNumber(sheetsDATA.DOKUMEN, "380"), invInvoiceNo),
   );
   addResult(
     "Invoice Date",
     draftInvoiceDate,
     invDateParsed,
-    isEqual(draftInvoiceDate, invDateParsed)
+    isEqual(draftInvoiceDate, invDateParsed),
   );
   addResult(
     "Packinglist No.",
     getDocumentNumber(sheetsDATA.DOKUMEN, "217"),
     plInvoiceNo,
-    isEqual(getDocumentNumber(sheetsDATA.DOKUMEN, "217"), plInvoiceNo)
+    isEqual(getDocumentNumber(sheetsDATA.DOKUMEN, "217"), plInvoiceNo),
   );
   addResult(
     "Packinglist Date",
     draftPackinglistDate,
     plDateParsed,
-    isEqual(draftPackinglistDate, plDateParsed)
+    isEqual(draftPackinglistDate, plDateParsed),
   );
 
   let invSuratJalan = "";
@@ -799,7 +811,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       XLSX.utils.encode_cell({
         r: invCols.headerRow + 1,
         c: invCols.suratjalan,
-      })
+      }),
     );
   }
 
@@ -809,14 +821,14 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     "Delivery Order",
     getDocumentNumber(sheetsDATA.DOKUMEN, "640"),
     invSuratJalan,
-    isEqual(getDocumentNumber(sheetsDATA.DOKUMEN, "640"), invSuratJalan)
+    isEqual(getDocumentNumber(sheetsDATA.DOKUMEN, "640"), invSuratJalan),
   );
 
   addResult(
     "Delivery Order Date",
     draftDeliveryOrderDate,
     invDateParsed,
-    isEqual(draftDeliveryOrderDate, invDateParsed)
+    isEqual(draftDeliveryOrderDate, invDateParsed),
   );
 
   // ---------- KONTRAK ----------
@@ -855,7 +867,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const monthIndex = new Date(`${mon} 1, 2000`).getMonth() + 1;
       if (!isNaN(monthIndex)) {
         return `${year}-${String(monthIndex).padStart(2, "0")}-${String(
-          day
+          day,
         ).padStart(2, "0")}`;
       }
     }
@@ -867,7 +879,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       const monthIndex = new Date(`${mon} 1, 2000`).getMonth() + 1;
       if (!isNaN(monthIndex)) {
         return `${year}-${String(monthIndex).padStart(2, "0")}-${String(
-          day
+          day,
         ).padStart(2, "0")}`;
       }
     }
@@ -878,7 +890,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     "Contract No.",
     getCellValue(sheetsDATA.DOKUMEN, "D4"),
     kontrakNo,
-    isEqual(getCellValue(sheetsDATA.DOKUMEN, "D4"), kontrakNo)
+    isEqual(getCellValue(sheetsDATA.DOKUMEN, "D4"), kontrakNo),
   );
 
   const draftContractDateRaw = getCellValue(sheetsDATA.DOKUMEN, "E4");
@@ -889,7 +901,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     "Contract Date",
     draftContractDate,
     kontrakTglFormatted,
-    isEqual(draftContractDate, kontrakTglFormatted)
+    isEqual(draftContractDate, kontrakTglFormatted),
   );
 
   const rangeBarang = XLSX.utils.decode_range(sheetsDATA.BARANG["!ref"]);
@@ -912,7 +924,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const invKode = invCols.kode
       ? getCellValue(
           sheetINV,
-          XLSX.utils.encode_cell({ r: rowINV, c: invCols.kode })
+          XLSX.utils.encode_cell({ r: rowINV, c: invCols.kode }),
         )
       : "";
     addResult("Code", kodeBarang, invKode, isEqual(kodeBarang, invKode));
@@ -921,14 +933,14 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const invUraian = invCols.uraian
       ? getCellValue(
           sheetINV,
-          XLSX.utils.encode_cell({ r: rowINV, c: invCols.uraian })
+          XLSX.utils.encode_cell({ r: rowINV, c: invCols.uraian }),
         )
       : "";
     addResult(
       "Item Name",
       draftUraian,
       invUraian,
-      isEqualStrict(draftUraian, invUraian)
+      isEqualStrict(draftUraian, invUraian),
     );
 
     // QTY Barang
@@ -936,7 +948,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const invQty = invCols.qty
       ? getCellValue(
           sheetINV,
-          XLSX.utils.encode_cell({ r: rowINV, c: invCols.qty })
+          XLSX.utils.encode_cell({ r: rowINV, c: invCols.qty }),
         )
       : "";
     // ===== UNIT PER BARANG dari PL =====
@@ -961,14 +973,14 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       qtyMatch && unitMatch,
       true,
       plUnit,
-      effectiveDraftUnit
+      effectiveDraftUnit,
     );
 
     const draftNW = getCellValue(sheetsDATA.BARANG, "T" + (r + 1));
     const plNW = plCols.nw
       ? getCellValue(
           sheetPL,
-          XLSX.utils.encode_cell({ r: rowPL, c: plCols.nw })
+          XLSX.utils.encode_cell({ r: rowPL, c: plCols.nw }),
         )
       : "";
     addResult("NW", draftNW, plNW, isEqual(draftNW, plNW), false, "KG");
@@ -977,7 +989,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const plGW = plCols.gw
       ? getCellValue(
           sheetPL,
-          XLSX.utils.encode_cell({ r: rowPL, c: plCols.gw })
+          XLSX.utils.encode_cell({ r: rowPL, c: plCols.gw }),
         )
       : "";
     addResult("GW", draftGW, plGW, isEqual(draftGW, plGW), false, "KG");
@@ -986,7 +998,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
     const invCIF = invCols.cif
       ? getCellValue(
           sheetINV,
-          XLSX.utils.encode_cell({ r: rowINV, c: invCols.cif })
+          XLSX.utils.encode_cell({ r: rowINV, c: invCols.cif }),
         )
       : "";
     addResult(
@@ -994,7 +1006,7 @@ function checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl) {
       `${draftCIF} ${valuta}`,
       `${invCIF} ${selectedValuta}`,
       isEqual(draftCIF, invCIF) && valuta === selectedValuta,
-      false
+      false,
     );
 
     barangCounter++;

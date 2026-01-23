@@ -107,7 +107,7 @@ function extractDataFromWorkbook(wb) {
   // HEADER
   // ===============================
   const bcNo = getCell(wb, "HEADER", "CP2") || "";
-  const segel = getCell(wb, "HEADER", "BC2") || "";
+  const segel = getCell(wb, "KEMASAN", "F2") || "";
   const aju = getCell(wb, "HEADER", "A2") || "";
   const t = getCell(wb, "HEADER", "CF2");
   const n2Val = getCell(wb, "HEADER", "N2");

@@ -50,7 +50,7 @@ async function processFiles(files) {
     return;
   }
 
-  checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl);
+  await checkAll(sheetPL, sheetINV, sheetsDATA, kurs, kontrakNo, kontrakTgl);
 }
 
 // === Deteksi otomatis tipe file berdasarkan isi sheet ===

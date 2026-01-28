@@ -109,7 +109,7 @@ function extractDataFromWorkbook(wb) {
   const bcNo = getCell(wb, "HEADER", "CP2") || "";
   const segel = getCell(wb, "KEMASAN", "F2") || "";
   const aju = getCell(wb, "HEADER", "A2") || "";
-  const t = getCell(wb, "HEADER", "CF2");
+  const t = getTanggalRespon(wb);
   const n2Val = getCell(wb, "HEADER", "N2");
 
   // ===============================
@@ -287,6 +287,43 @@ function renderPreview(dataArr) {
 function getSelectedValues(selectId) {
   return Array.from($(selectId).selectedOptions).map((o) => o.value);
 }
+function getTanggalRespon(wb) {
+  const sheet = wb.Sheets["RESPON"];
+  if (!sheet || !sheet["!ref"]) return null;
+
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  if (rows.length < 2) return null;
+
+  // Cari index kolom
+  const header = rows[0].map((h) => String(h || "").toUpperCase());
+
+  const kodeIdx = header.indexOf("KODE RESPON");
+  const tanggalIdx = header.indexOf("TANGGAL RESPON");
+
+  if (kodeIdx === -1 || tanggalIdx === -1) return null;
+
+  // Cari baris dengan KODE RESPON = 2702
+  for (let i = 1; i < rows.length; i++) {
+    const kode = String(rows[i][kodeIdx] || "").trim();
+    if (kode === "2702") {
+      const rawDate = rows[i][tanggalIdx];
+      if (!rawDate) return null;
+
+      // Excel date (number)
+      if (typeof rawDate === "number") {
+        const utcDays = Math.floor(rawDate - 25569);
+        return new Date(utcDays * 86400 * 1000);
+      }
+
+      // String date
+      const d = new Date(rawDate);
+      return isNaN(d) ? null : d;
+    }
+  }
+
+  return null;
+}
+
 function formatKeyValue(map) {
   return Object.entries(map)
     .map(([u, q]) => `${fmtNum(q)} ${u}`)

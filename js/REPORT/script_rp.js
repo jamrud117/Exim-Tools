@@ -302,10 +302,10 @@ function getTanggalRespon(wb) {
 
   if (kodeIdx === -1 || tanggalIdx === -1) return null;
 
-  // Cari baris dengan KODE RESPON = 2702
+  // Cari baris dengan KODE RESPON = 2703
   for (let i = 1; i < rows.length; i++) {
     const kode = String(rows[i][kodeIdx] || "").trim();
-    if (kode === "2702") {
+    if (kode === "2703") {
       const rawDate = rows[i][tanggalIdx];
       if (!rawDate) return null;
 

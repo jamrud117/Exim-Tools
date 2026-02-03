@@ -312,11 +312,13 @@ function applyQuantity() {
   const row = [...currentEkstrRows[index]];
 
   // 🔹 Kolom sesuai ekstraksiCols
-  const qtyIndex = 9; // JUMLAH SATUAN
-  const cifIndex = 22; // CIF
-  const cifRpIndex = 23; // CIF RUPIAH
-  const ndpbmIndex = 24; // NDPBM
-  const hargaIndex = 25; // HARGA PENYERAHAN
+  const colIndex = (name) => ekstraksiCols.indexOf(name);
+
+  const qtyIndex = colIndex("JUMLAH SATUAN");
+  const cifIndex = colIndex("CIF");
+  const cifRpIndex = colIndex("CIF RUPIAH");
+  const ndpbmIndex = colIndex("NDPBM");
+  const hargaIndex = colIndex("HARGA PENYERAHAN");
 
   const qtyAwal = parseFloat(row[qtyIndex]) || 1;
   const cifAwal = parseFloat(row[cifIndex]) || 0;

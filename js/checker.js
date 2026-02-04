@@ -527,7 +527,7 @@ async function checkAll(
   );
 
   // ---------- PPN 11% ----------
-  const dasarPengenaanPajak = getCellValue(sheetsDATA.HEADER, "BY2");
+  const dasarPengenaanPajak = getCellValue(sheetsDATA.HEADER, "CT2");
   const ppnCalc = cifSum * kursParsed * 0.11;
   addResult(
     "PPN 11%",

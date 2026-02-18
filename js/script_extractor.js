@@ -68,14 +68,34 @@ let seriIndexMap = {}; // 🔑 GLOBAL MAP
 const sheetToJSON = (sheet) =>
   XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
-const buildTable = (headers, rows) => {
-  let html = "<table><thead><tr>";
+const buildTable = (headers, rows, hideZero = false) => {
+  let html = `
+    <div class="table-action">
+      <button class="copyAllBtn">📋 Copy All</button>
+    </div>
+  `;
+
+  html += "<table><thead><tr>";
   headers.forEach((h) => (html += `<th>${h}</th>`));
   html += "<th>Aksi</th></tr></thead><tbody>";
 
   rows.forEach((r, i) => {
     html += "<tr>";
-    headers.forEach((_, j) => (html += `<td>${r[j] ?? ""}</td>`));
+    headers.forEach((colName, j) => {
+      let value = r[j] ?? "";
+
+      // 🔥 KHUSUS EKSTRAKSI → 0 jadi "" KECUALI KODE ASAL BB
+      if (
+        hideZero &&
+        (value === 0 || value === "0") &&
+        colName !== "KODE ASAL BB"
+      ) {
+        value = "";
+      }
+
+      html += `<td>${value}</td>`;
+    });
+
     html += `<td><button class="copyRowBtn" data-index="${i}">📋 Copy</button></td>`;
     html += "</tr>";
   });
@@ -87,11 +107,50 @@ const buildTable = (headers, rows) => {
 const attachCopyButtons = (id, data) => {
   document.querySelectorAll(`#${id} .copyRowBtn`).forEach((btn) =>
     btn.addEventListener("click", () => {
-      navigator.clipboard.writeText(data[btn.dataset.index].join("\t"));
+      const row = data[btn.dataset.index].map((val, i) => {
+        const colName = ekstraksiCols[i];
+
+        if ((val === 0 || val === "0") && colName !== "KODE ASAL BB") {
+          return "";
+        }
+
+        return val;
+      });
+
+      navigator.clipboard.writeText(row.join("\t"));
+
       btn.textContent = "✅ Copied!";
       setTimeout(() => (btn.textContent = "📋 Copy"), 1000);
     })
   );
+};
+
+const attachCopyAllButton = (id, data) => {
+  const btn = document.querySelector(`#${id} .copyAllBtn`);
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const text = data
+      .map((row) =>
+        row
+          .map((val, i) => {
+            const colName = ekstraksiCols[i];
+
+            if ((val === 0 || val === "0") && colName !== "KODE ASAL BB") {
+              return "";
+            }
+
+            return val;
+          })
+          .join("\t")
+      )
+      .join("\n");
+
+    navigator.clipboard.writeText(text);
+
+    btn.textContent = "✅ Copied All!";
+    setTimeout(() => (btn.textContent = "📋 Copy All"), 1500);
+  });
 };
 
 const fadeUpdate = (el, html, after) => {
@@ -200,6 +259,7 @@ function processWorkbook(wb) {
     barangRows
   );
   attachCopyButtons("barangTableWrap", barangRows);
+  attachCopyAllButton("barangTableWrap", barangRows);
 
   // EKSTRAKSI
   // EKSTRAKSI (FIX LOGIKA DOKUMEN 40)
@@ -259,9 +319,11 @@ function processWorkbook(wb) {
 
   const wrap = document.getElementById("ekstraksiTableWrap");
   document.getElementById("ekstraksiCard").style.display = "block";
-  fadeUpdate(wrap, buildTable(ekstraksiCols, currentEkstrRows), () =>
-    attachCopyButtons("ekstraksiTableWrap", currentEkstrRows)
-  );
+
+  fadeUpdate(wrap, buildTable(ekstraksiCols, currentEkstrRows, true), () => {
+    attachCopyButtons("ekstraksiTableWrap", currentEkstrRows);
+    attachCopyAllButton("ekstraksiTableWrap", currentEkstrRows);
+  });
 
   // DROPDOWN
   const select = document.getElementById("barangSelect");
@@ -277,14 +339,20 @@ function processWorkbook(wb) {
 
   select.onchange = () => {
     if (select.value === "all") {
-      fadeUpdate(wrap, buildTable(ekstraksiCols, currentEkstrRows), () =>
-        attachCopyButtons("ekstraksiTableWrap", currentEkstrRows)
+      fadeUpdate(
+        wrap,
+        buildTable(ekstraksiCols, currentEkstrRows, true),
+        () => {
+          attachCopyButtons("ekstraksiTableWrap", currentEkstrRows);
+          attachCopyAllButton("ekstraksiTableWrap", currentEkstrRows);
+        }
       );
     } else {
       const row = currentEkstrRows[seriIndexMap[select.value]];
-      fadeUpdate(wrap, buildTable(ekstraksiCols, [row]), () =>
-        attachCopyButtons("ekstraksiTableWrap", [row])
-      );
+      fadeUpdate(wrap, buildTable(ekstraksiCols, [row], true), () => {
+        attachCopyButtons("ekstraksiTableWrap", [row]);
+        attachCopyAllButton("ekstraksiTableWrap", [row]);
+      });
     }
   };
 }
@@ -349,7 +417,7 @@ function applyQuantity() {
 
     fadeUpdate(
       document.getElementById("ekstraksiTableWrap"),
-      buildTable(ekstraksiCols, [row]),
+      buildTable(ekstraksiCols, [row], true),
       () => attachCopyButtons("ekstraksiTableWrap", [row])
     );
     return;
@@ -392,7 +460,7 @@ function resetData() {
 
   fadeUpdate(
     document.getElementById("ekstraksiTableWrap"),
-    buildTable(ekstraksiCols, currentEkstrRows),
+    buildTable(ekstraksiCols, currentEkstrRows, true),
     () => attachCopyButtons("ekstraksiTableWrap", currentEkstrRows)
   );
 }

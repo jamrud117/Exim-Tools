@@ -351,6 +351,17 @@ function generateResultText(dataArr) {
   const rawBC = $("jenisBC").value;
   const { bc, arah } = parseJenisBC(rawBC);
 
+  const groupedBySender = {};
+  dataArr.forEach((d) => {
+    const key = d.pengirim || "TANPA PENGIRIM";
+
+    if (!groupedBySender[key]) {
+      groupedBySender[key] = [];
+    }
+
+    groupedBySender[key].push(d);
+  });
+
   const defaultJalur = $("statusJalur")?.value || "HIJAU";
   const jalurOverrideMap = parseJalurOverride($("jalurOverride")?.value || "");
 
@@ -388,6 +399,117 @@ function generateResultText(dataArr) {
 
     if (d.tanggal) tanggalArr.push(d.tanggal);
   });
+  
+
+  const results = [];
+
+  for (const [pengirim, items] of Object.entries(groupedBySender)) {
+    results.push(generateSingleReport(items, pengirim));
+  }
+
+  return results.join("\n\n");
+}
+
+
+function generateSingleReport(dataArr, pengirim) {
+  const rawBC = $("jenisBC").value;
+  const { bc, arah } = parseJenisBC(rawBC);
+
+  const defaultJalur = $("statusJalur")?.value || "HIJAU";
+  const jalurOverrideMap = parseJalurOverride($("jalurOverride")?.value || "");
+
+  const jenisBarang = getSelectedValues("jenisBarang").join(" + ");
+  const masukTxt = fmtDate(new Date($("masukTgl").value));
+
+  const bcGrouped = {};
+  const bcList = {};
+  const segelList = [];
+  const kemasanMap = {};
+  const barangMap = {};
+  const tanggalArr = [];
+
+  dataArr.forEach((d) => {
+    const jalur =
+      jalurOverrideMap[d.bc] || jalurOverrideMap[d.aju] || defaultJalur;
+
+    const key = `${jalur} | ${d.jenistrx}`;
+    if (!bcGrouped[key]) bcGrouped[key] = [];
+    if (d.bc) bcGrouped[key].push(d.bc);
+
+    if (!bcList[d.jenistrx]) bcList[d.jenistrx] = [];
+    if (d.bc) bcList[d.jenistrx].push(d.bc);
+
+    if (d.segel) segelList.push(d.segel);
+
+    for (const [u, q] of Object.entries(d.kemasan))
+      kemasanMap[u] = (kemasanMap[u] || 0) + q;
+
+    for (const [u, q] of Object.entries(d.barang.map))
+      barangMap[u] = (barangMap[u] || 0) + q;
+
+    if (d.tanggal) tanggalArr.push(d.tanggal);
+  });
+
+  // =============================================
+  // FORMAT OUTPUT SESUAI JENIS BC
+  // =============================================
+
+  if (bc === "BC 4.0" || bc === "BC 4.1") {
+    const is40 = bc === "BC 4.0";
+    const labelEntitas = is40 ? "Supplier" : "Tujuan";
+    const tanggalLabel = arah === "Keluar" ? "Tanggal Keluar" : "Tanggal Masuk";
+
+    return [
+      `*${rawBC}*`,
+      `${labelEntitas} : ${pengirim}`,
+      ...Object.entries(bcGrouped).map(
+        ([k, v]) => `No BC (${k}) : ${v.join(", ")}`
+      ),
+      `Jenis Barang : ${jenisBarang}`,
+      `Jumlah barang : ${formatKeyValue(barangMap)}`,
+      `Jumlah kemasan : ${formatKeyValue(kemasanMap)}`,
+      `${tanggalLabel} : ${masukTxt}`,
+    ].join("\n");
+  }
+
+  // =============================================
+  // BC 2.7 KELUAR
+  // =============================================
+  if (bc === "BC 2.7" && arah === "Keluar") {
+    return [
+      `*BC 2.7 Keluar*`,
+      `Customer : ${pengirim}`,
+      ...Object.entries(bcGrouped).map(
+        ([k, v]) => `BC 2.7 (${k}) : ${v.join(", ")}`
+      ),
+      `No. Segel : ${segelList.join(", ")}`,
+      `Jumlah Dokumen : ${dataArr.length} Dokumen`,
+      `Jenis Barang : ${jenisBarang}`,
+      `Jumlah Barang : ${formatKeyValue(barangMap)}`,
+      `Kemasan : ${formatKeyValue(kemasanMap)}`,
+      `Tanggal Keluar : ${masukTxt}`,
+    ].join("\n");
+  }
+
+  // =============================================
+  // DEFAULT: BC 2.7 MASUK
+  // =============================================
+  return [
+    `*BC 2.7 Masuk*`,
+    `Supplier : ${pengirim}`,
+    ...Object.entries(bcList).map(
+      ([j, l]) => `No BC 2.7 (${j}) : ${l.join(", ")}`
+    ),
+    `No Segel : ${segelList.join(", ")}`,
+    `Jumlah Dokumen : ${dataArr.length} Dokumen`,
+    `Jenis Barang : ${jenisBarang}`,
+    `Jumlah barang : ${formatKeyValue(barangMap)}`,
+    `Jumlah kemasan : ${formatKeyValue(kemasanMap)}`,
+    `Tanggal Dokumen : ${formatTanggalDokumen(tanggalArr)}`,
+    `Tanggal Masuk : ${masukTxt}`,
+  ].join("\n");
+}
+
 
   // ==================================================
   // ✅ FORMAT KHUSUS BC 4.0 & 4.1

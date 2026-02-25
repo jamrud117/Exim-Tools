@@ -958,16 +958,20 @@ async function checkAll(
     return d;
   }
 
-  addResult(
-    "Contract No.",
-    getCellValue(sheetsDATA.DOKUMEN, "D4"),
-    kontrakNo,
-    isEqual(getCellValue(sheetsDATA.DOKUMEN, "D4"), kontrakNo)
-  );
+  // ===== Ambil Contract berdasarkan kode 315 =====
+  const draftContractNo = getDocumentNumber(sheetsDATA.DOKUMEN, "315");
 
-  const draftContractDateRaw = getCellValue(sheetsDATA.DOKUMEN, "E4");
+  const draftContractDateRaw = findDocDateByCode(sheetsDATA.DOKUMEN, "315");
+
   const draftContractDate = parseExcelDate(draftContractDateRaw);
   const kontrakTglFormatted = parseExcelDate(kontrakTgl);
+
+  addResult(
+    "Contract No.",
+    draftContractNo,
+    kontrakNo,
+    isEqual(draftContractNo, kontrakNo)
+  );
 
   addResult(
     "Contract Date",

@@ -330,7 +330,6 @@ async function checkAll(
 
   const findInvoiceNo = (sheet) => {
     const range = XLSX.utils.decode_range(sheet["!ref"]);
-    // Tambahkan keyword yang ingin dicari
     const keywords = ["INVOICE NO", "PACKINGLIST NO", "PACKING LIST NO"];
 
     for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -339,18 +338,26 @@ async function checkAll(
         if (cell && typeof cell.v === "string") {
           const cellText = cell.v.toUpperCase();
 
-          // Jika cell mengandung salah satu keyword
           if (keywords.some((key) => cellText.includes(key))) {
             const lines = cell.v.split(/\r?\n/);
+
             for (const line of lines) {
-              // Cek tiap baris apakah ada keyword
               const foundKey = keywords.find((key) =>
                 line.toUpperCase().includes(key)
               );
+
               if (foundKey) {
                 const parts = line.split(":");
                 if (parts.length > 1) {
-                  return parts[1].trim();
+                  let value = parts[1].trim();
+
+                  // 🔥 STOP jika ada kata DATE
+                  value = value.split(/DATE/i)[0].trim();
+
+                  // 🔥 ambil hanya token pertama
+                  value = value.split(/\s+/)[0].trim();
+
+                  return value;
                 }
               }
             }

@@ -55,7 +55,6 @@ function saveMapping() {
   const qty = document.getElementById("mapQty").value.trim();
   const cif = document.getElementById("mapCIF").value.trim();
   const suratjalan = document.getElementById("mapSJ").value.trim();
-  const no = document.getElementById("mapNo").value.trim();
   const npwp = document.getElementById("npwp").value.trim();
 
   // Validasi wajib isi
@@ -68,7 +67,6 @@ function saveMapping() {
     { value: qty, label: "Header quantity customer" },
     { value: cif, label: "Header CIF customer" },
     { value: suratjalan, label: "Header surat jalan customer" },
-    { value: no, label: "Header No / Item No" },
     { value: npwp, label: "NPWP customer" },
   ];
 
@@ -90,7 +88,6 @@ function saveMapping() {
     qty: qty,
     cif: cif,
     suratjalan: suratjalan,
-    no,
     npwp: npwp,
   };
 
@@ -153,7 +150,6 @@ function render() {
           <td>${m.qty}</td>
           <td>${m.cif}</td>
           <td>${m.suratjalan || "-"}</td>
-          <td>${m.no || "-"}</td>
           <td>${m.npwp}</td>
           <td>
             <button class="btn btn-warning" onclick="openEdit('${pt}')">Edit</button>
@@ -195,7 +191,6 @@ function openEdit(pt) {
   document.getElementById("editQty").value = d.qty;
   document.getElementById("editCIF").value = d.cif;
   document.getElementById("editSJ").value = d.suratjalan;
-  document.getElementById("editNo").value = d.no || "";
   document.getElementById("editNPWP").value = d.npwp;
 
   new bootstrap.Modal(document.getElementById("editModal")).show();
@@ -212,7 +207,6 @@ function saveEdit() {
     qty: document.getElementById("editQty").value.trim(),
     cif: document.getElementById("editCIF").value.trim(),
     suratjalan: document.getElementById("editSJ").value.trim(),
-    no: document.getElementById("editNo").value.trim(),
     npwp: document.getElementById("editNPWP").value.trim(),
   };
 

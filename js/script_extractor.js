@@ -283,14 +283,28 @@ function processWorkbook(wb) {
       if (c === "NOMOR AJU ASAL") return header.nomorAju;
       if (c === "SERI BARANG ASAL") return r[idx("SERI BARANG")] ?? "";
 
+      if (c === "VOLUME") {
+        const qty = parseFloat(r[idx("JUMLAH SATUAN")]) || "";
+        let cifVal = 0;
+
+        if (isDoc40) {
+          cifVal = hargaExcel;
+        } else {
+          cifVal = cifExcel;
+        }
+
+        if (!qty) return "";
+        return formatNumber(cifVal / qty);
+      }
+
       // ===============================
       // 🔥 KHUSUS DOKUMEN 40 (MENTAH)
       // ===============================
       if (isDoc40) {
-        if (c === "CIF") return cifExcel ? formatNumber(cifExcel) : "";
+        if (c === "CIF") return formatNumber(hargaExcel);
         if (c === "CIF RUPIAH")
           return cifRpExcel ? formatNumber(cifRpExcel) : "";
-        if (c === "NDPBM") return formatNumber(ndpbmExcel);
+        if (c === "NDPBM") return formatNumber(ndpbmExcel || 1);
         if (c === "HARGA PENYERAHAN") return formatNumber(hargaExcel);
       }
 
@@ -390,6 +404,7 @@ function applyQuantity() {
   const ndpbmIdx = ci("NDPBM");
   const hargaIdx = ci("HARGA PENYERAHAN");
   const docIdx = ci("KODE DOKUMEN ASAL");
+  const volumeIdx = ci("VOLUME");
 
   const qtyAwal = parseFloat(row[qtyIdx]) || 1;
   const nettoAwal = parseFloat(row[nettoIdx]) || 0;
@@ -408,10 +423,14 @@ function applyQuantity() {
     const unitBruto = brutoAwal / qtyAwal;
     const unitHarga = hargaAwal / qtyAwal;
 
+    const hargaBaru = unitHarga * qty;
+
     row[qtyIdx] = formatNumber(qty);
     row[nettoIdx] = formatNumber(unitNetto * qty);
     row[brutoIdx] = formatNumber(unitBruto * qty);
-    row[hargaIdx] = formatNumber(unitHarga * qty);
+    row[hargaIdx] = formatNumber(hargaBaru);
+    row[cifIdx] = formatNumber(hargaBaru);
+    row[volumeIdx] = formatNumber(qty ? hargaBaru / qty : "");
 
     currentEkstrRows[index] = row;
 
@@ -440,6 +459,7 @@ function applyQuantity() {
   row[brutoIdx] = formatNumber(brutoBaru);
   row[cifIdx] = formatNumber(cifBaru);
   row[hargaIdx] = formatNumber(hargaBaru);
+  row[volumeIdx] = formatNumber(qty ? cifBaru / qty : 0);
 
   currentEkstrRows[index] = row;
 

@@ -404,7 +404,6 @@ function applyQuantity() {
   const ndpbmIdx = ci("NDPBM");
   const hargaIdx = ci("HARGA PENYERAHAN");
   const docIdx = ci("KODE DOKUMEN ASAL");
-  const volumeIdx = ci("VOLUME");
 
   const qtyAwal = parseFloat(row[qtyIdx]) || 1;
   const nettoAwal = parseFloat(row[nettoIdx]) || 0;
@@ -430,7 +429,6 @@ function applyQuantity() {
     row[brutoIdx] = formatNumber(unitBruto * qty);
     row[hargaIdx] = formatNumber(hargaBaru);
     row[cifIdx] = formatNumber(hargaBaru);
-    row[volumeIdx] = formatNumber(qty ? hargaBaru / qty : "");
 
     currentEkstrRows[index] = row;
 
@@ -459,7 +457,6 @@ function applyQuantity() {
   row[brutoIdx] = formatNumber(brutoBaru);
   row[cifIdx] = formatNumber(cifBaru);
   row[hargaIdx] = formatNumber(hargaBaru);
-  row[volumeIdx] = formatNumber(qty ? cifBaru / qty : 0);
 
   currentEkstrRows[index] = row;
 
